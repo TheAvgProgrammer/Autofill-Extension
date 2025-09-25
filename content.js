@@ -62,11 +62,24 @@
         }
     };
 
+    // Initialize AI service
+    const aiService = new AIService();
+
     // Listen for messages from popup
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
-            const result = performAutofill(request.profile);
-            sendResponse(result);
+            // Use AI-powered autofill as primary method
+            performAIAutofill(request.profile)
+                .then(result => sendResponse(result))
+                .catch(error => {
+                    console.error('AI autofill failed, falling back to regex-based autofill:', error);
+                    // Fallback to original regex-based method
+                    const fallbackResult = performAutofill(request.profile);
+                    fallbackResult.method = 'regex-fallback';
+                    fallbackResult.aiError = error.message;
+                    sendResponse(fallbackResult);
+                });
+            return true; // Keep the message channel open for async response
         }
         return true;
     });
@@ -100,6 +113,67 @@
                 success: false,
                 error: error.message
             };
+        }
+    }
+
+    /**
+     * AI-powered autofill using Google Gemini
+     * @param {Object} profile - User profile data
+     * @returns {Promise<Object>} Autofill result
+     */
+    async function performAIAutofill(profile) {
+        try {
+            console.log('Starting AI-powered autofill...');
+            
+            // Get the complete HTML of the page
+            const pageHTML = document.documentElement.outerHTML;
+            
+            // Generate JavaScript code using AI
+            console.log('Calling Gemini API...');
+            const jsCode = await aiService.generateAutofillCode(pageHTML, profile);
+            
+            console.log('Generated JavaScript code:', jsCode);
+            
+            // Execute the generated JavaScript code
+            let filledCount = 0;
+            try {
+                // Wrap the code in a try-catch for safe execution
+                const executeCode = new Function(`
+                    try {
+                        return (${jsCode});
+                    } catch (error) {
+                        console.error('Error executing AI-generated code:', error);
+                        return 0;
+                    }
+                `);
+                
+                filledCount = executeCode() || 0;
+                
+                // Add visual feedback for filled fields
+                setTimeout(() => {
+                    const filledFields = document.querySelectorAll('input:not([value=""]), textarea:not(:empty)');
+                    filledFields.forEach(field => {
+                        if (field.value && field.value !== field.placeholder) {
+                            highlightFilledField(field);
+                        }
+                    });
+                }, 100);
+                
+            } catch (executionError) {
+                console.error('Error executing AI-generated code:', executionError);
+                throw new Error(`Code execution failed: ${executionError.message}`);
+            }
+            
+            return {
+                success: true,
+                fieldsFound: filledCount,
+                method: 'ai-powered',
+                totalFields: document.querySelectorAll('input, textarea, select').length
+            };
+            
+        } catch (error) {
+            console.error('AI autofill error:', error);
+            throw error;
         }
     }
 
