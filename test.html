@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Form - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+        .note {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Job Application Form</h1>
+        
+        <div class="note">
+            <p><strong>Test your autofill extension here!</strong> This form contains various common job application fields that should be automatically filled by the extension.</p>
+        </div>
+
+        <form id="jobApplication">
+            <div class="form-group">
+                <label for="applicant_name">Full Name *</label>
+                <input type="text" id="applicant_name" name="full_name" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email_address">Email Address *</label>
+                    <input type="email" id="email_address" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone_number">Phone Number *</label>
+                    <input type="tel" id="phone_number" name="phone" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="street_address">Street Address</label>
+                <input type="text" id="street_address" name="address" placeholder="Enter your street address">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city">
+                </div>
+                <div class="form-group">
+                    <label for="state">State/Province</label>
+                    <input type="text" id="state" name="state">
+                </div>
+                <div class="form-group">
+                    <label for="zip_code">ZIP Code</label>
+                    <input type="text" id="zip_code" name="zipcode">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country</label>
+                <select id="country" name="country">
+                    <option value="">Select Country</option>
+                    <option value="US">United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="UK">United Kingdom</option>
+                    <option value="AU">Australia</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="education_background">Education Background</label>
+                <textarea id="education_background" name="education" placeholder="Describe your educational background..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="work_experience">Work Experience</label>
+                <textarea id="work_experience" name="experience" placeholder="Describe your work experience..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="skills_list">Skills & Competencies</label>
+                <textarea id="skills_list" name="skills" placeholder="List your relevant skills..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="linkedin_url">LinkedIn Profile</label>
+                    <input type="url" id="linkedin_url" name="linkedin" placeholder="https://linkedin.com/in/yourprofile">
+                </div>
+                <div class="form-group">
+                    <label for="portfolio_website">Portfolio/Website</label>
+                    <input type="url" id="portfolio_website" name="portfolio" placeholder="https://yourportfolio.com">
+                </div>
+            </div>
+
+            <!-- Additional fields with different naming patterns -->
+            <div class="form-group">
+                <label for="candidate_email">Alternative Email Field</label>
+                <input type="email" id="candidate_email" name="alt_email" placeholder="Another email field to test matching">
+            </div>
+
+            <div class="form-group">
+                <label for="mobile">Mobile Phone</label>
+                <input type="tel" id="mobile" name="mobile_phone" placeholder="Another phone field">
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Application</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('jobApplication').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('This is just a test form. Your extension should have filled the fields!');
+        });
+    </script>
+</body>
+</html>
