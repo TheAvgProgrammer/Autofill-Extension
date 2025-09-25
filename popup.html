@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Job Application Autofill</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Job Application Autofill</h1>
+        </div>
+        
+        <div class="tabs">
+            <button id="profileTab" class="tab-button active">Profile</button>
+            <button id="autofillTab" class="tab-button">Autofill</button>
+        </div>
+
+        <div id="profileSection" class="section active">
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="fullName">Full Name *</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone *</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea id="address" name="address" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city">
+                </div>
+
+                <div class="form-group">
+                    <label for="state">State/Province</label>
+                    <input type="text" id="state" name="state">
+                </div>
+
+                <div class="form-group">
+                    <label for="zipCode">ZIP/Postal Code</label>
+                    <input type="text" id="zipCode" name="zipCode">
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <input type="text" id="country" name="country">
+                </div>
+
+                <div class="form-group">
+                    <label for="education">Education</label>
+                    <textarea id="education" name="education" rows="3" placeholder="e.g., Bachelor's in Computer Science, University Name, 2020"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="experience">Work Experience</label>
+                    <textarea id="experience" name="experience" rows="4" placeholder="e.g., Software Developer at Company XYZ (2020-2023)"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="skills">Skills</label>
+                    <textarea id="skills" name="skills" rows="3" placeholder="e.g., JavaScript, Python, React, Node.js"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="linkedin">LinkedIn Profile</label>
+                    <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/yourprofile">
+                </div>
+
+                <div class="form-group">
+                    <label for="portfolio">Portfolio/Website</label>
+                    <input type="url" id="portfolio" name="portfolio" placeholder="https://yourportfolio.com">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save Profile</button>
+            </form>
+        </div>
+
+        <div id="autofillSection" class="section">
+            <div class="autofill-content">
+                <p class="info-text">Click the button below to automatically fill job application forms on this page with your saved profile data.</p>
+                
+                <button id="autofillBtn" class="btn btn-autofill">
+                    <span class="btn-icon">⚡</span>
+                    Autofill Forms
+                </button>
+                
+                <div id="status" class="status-message"></div>
+                
+                <div class="help-text">
+                    <p><strong>How it works:</strong></p>
+                    <ul>
+                        <li>The extension scans the page for form fields</li>
+                        <li>Matches field names/labels to your profile data</li>
+                        <li>Automatically fills matching fields</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
