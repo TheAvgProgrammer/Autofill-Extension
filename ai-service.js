@@ -7,10 +7,10 @@ class AIService {
     }
 
     /**
-     * Generates JavaScript code to fill form fields using Google Gemini AI
+     * Generates structured JSON data to fill form fields using Google Gemini AI
      * @param {string} pageHTML - The HTML content of the page
      * @param {Object} userProfile - User profile data
-     * @returns {Promise<string>} JavaScript code to execute for filling forms
+     * @returns {Promise<Array>} Array of {selector, value} objects for filling forms
      */
     async generateAutofillCode(pageHTML, userProfile) {
         // Use mock response for testing if API is not accessible
@@ -53,10 +53,10 @@ class AIService {
 
             const generatedText = data.candidates[0].content.parts[0].text;
             
-            // Extract JavaScript code from the response
-            const jsCode = this.extractJavaScript(generatedText);
+            // Extract JSON array from the response
+            const jsonData = this.extractJSON(generatedText);
             
-            return jsCode;
+            return jsonData;
         } catch (error) {
             console.error('Error calling Gemini API:', error);
             // Fallback to mock code generation for testing
@@ -79,152 +79,130 @@ class AIService {
     }
 
     /**
-     * Generate mock autofill code for testing purposes
+     * Generate mock autofill data for testing purposes
      * @param {Object} userProfile - User profile data
-     * @returns {string} Mock JavaScript code
+     * @returns {Array} Array of {selector, value} objects
      */
     getMockAutofillCode(userProfile) {
-        return `
-(function() {
-    let filledCount = 0;
-    
-    // First Name field variations
-    const firstNameSelectors = [
-        'input[name*="first" i]',
-        'input[id*="first" i]', 
-        'input[placeholder*="first" i]',
-        'input[name="fname"]',
-        'input[id="fname"]'
-    ];
-    
-    for (const selector of firstNameSelectors) {
-        const field = document.querySelector(selector);
-        if (field && (!field.value || field.value === field.placeholder)) {
-            field.value = "${userProfile.firstName || ''}";
-            ['input', 'change', 'blur'].forEach(eventType => {
-                field.dispatchEvent(new Event(eventType, { bubbles: true }));
-            });
-            filledCount++;
-            break;
-        }
-    }
-    
-    // Last Name field variations
-    const lastNameSelectors = [
-        'input[name*="last" i]',
-        'input[id*="last" i]',
-        'input[placeholder*="last" i]',
-        'input[name="lname"]',
-        'input[id="lname"]',
-        'input[name*="surname" i]'
-    ];
-    
-    for (const selector of lastNameSelectors) {
-        const field = document.querySelector(selector);
-        if (field && (!field.value || field.value === field.placeholder)) {
-            field.value = "${userProfile.lastName || ''}";
-            ['input', 'change', 'blur'].forEach(eventType => {
-                field.dispatchEvent(new Event(eventType, { bubbles: true }));
-            });
-            filledCount++;
-            break;
-        }
-    }
-    
-    // Email field variations
-    const emailSelectors = [
-        'input[type="email"]',
-        'input[name*="email" i]',
-        'input[id*="email" i]',
-        'input[placeholder*="email" i]'
-    ];
-    
-    for (const selector of emailSelectors) {
-        const field = document.querySelector(selector);
-        if (field && (!field.value || field.value === field.placeholder)) {
-            field.value = "${userProfile.email || ''}";
-            ['input', 'change', 'blur'].forEach(eventType => {
-                field.dispatchEvent(new Event(eventType, { bubbles: true }));
-            });
-            filledCount++;
-            break;
-        }
-    }
-    
-    // Phone field variations
-    const phoneSelectors = [
-        'input[type="tel"]',
-        'input[name*="phone" i]',
-        'input[id*="phone" i]',
-        'input[placeholder*="phone" i]',
-        'input[name*="mobile" i]'
-    ];
-    
-    for (const selector of phoneSelectors) {
-        const field = document.querySelector(selector);
-        if (field && (!field.value || field.value === field.placeholder)) {
-            field.value = "${userProfile.phone || ''}";
-            ['input', 'change', 'blur'].forEach(eventType => {
-                field.dispatchEvent(new Event(eventType, { bubbles: true }));
-            });
-            filledCount++;
-            break;
-        }
-    }
-    
-    // Address field
-    const addressSelectors = [
-        'textarea[name*="address" i]',
-        'input[name*="address" i]',
-        'textarea[id*="address" i]',
-        'input[id*="address" i]'
-    ];
-    
-    for (const selector of addressSelectors) {
-        const field = document.querySelector(selector);
-        if (field && (!field.value || field.value === field.placeholder)) {
-            field.value = "${userProfile.address || ''}";
-            ['input', 'change', 'blur'].forEach(eventType => {
-                field.dispatchEvent(new Event(eventType, { bubbles: true }));
-            });
-            filledCount++;
-            break;
-        }
-    }
-    
-    // Additional fields with similar logic...
-    const fieldMappings = [
-        { selectors: ['input[name*="city" i]', 'input[id*="city" i]'], value: "${userProfile.city || ''}" },
-        { selectors: ['input[name*="state" i]', 'input[id*="state" i]', 'input[name*="province" i]'], value: "${userProfile.state || ''}" },
-        { selectors: ['input[name*="zip" i]', 'input[id*="zip" i]', 'input[name*="postal" i]'], value: "${userProfile.zipCode || ''}" },
-        { selectors: ['input[name*="country" i]', 'input[id*="country" i]'], value: "${userProfile.country || ''}" },
-        { selectors: ['textarea[name*="education" i]', 'textarea[id*="education" i]'], value: "${userProfile.education || ''}" },
-        { selectors: ['textarea[name*="experience" i]', 'textarea[id*="experience" i]', 'textarea[name*="work" i]'], value: "${userProfile.experience || ''}" },
-        { selectors: ['textarea[name*="skill" i]', 'textarea[id*="skill" i]'], value: "${userProfile.skills || ''}" },
-        { selectors: ['input[name*="linkedin" i]', 'input[id*="linkedin" i]'], value: "${userProfile.linkedin || ''}" },
-        { selectors: ['input[name*="portfolio" i]', 'input[id*="portfolio" i]', 'input[name*="website" i]'], value: "${userProfile.portfolio || ''}" }
-    ];
-    
-    fieldMappings.forEach(mapping => {
-        for (const selector of mapping.selectors) {
-            const field = document.querySelector(selector);
-            if (field && (!field.value || field.value === field.placeholder) && mapping.value) {
-                field.value = mapping.value;
-                ['input', 'change', 'blur'].forEach(eventType => {
-                    field.dispatchEvent(new Event(eventType, { bubbles: true }));
-                });
-                filledCount++;
-                break;
+        const fieldMappings = [
+            // First name fields
+            {
+                selectors: [
+                    'input[name*="first" i]',
+                    'input[id*="first" i]', 
+                    'input[placeholder*="first" i]',
+                    'input[name="fname"]',
+                    'input[id="fname"]'
+                ],
+                value: userProfile.firstName || ''
+            },
+            // Last name fields
+            {
+                selectors: [
+                    'input[name*="last" i]',
+                    'input[id*="last" i]',
+                    'input[placeholder*="last" i]',
+                    'input[name="lname"]',
+                    'input[id="lname"]',
+                    'input[name*="surname" i]'
+                ],
+                value: userProfile.lastName || ''
+            },
+            // Email fields
+            {
+                selectors: [
+                    'input[type="email"]',
+                    'input[name*="email" i]',
+                    'input[id*="email" i]',
+                    'input[placeholder*="email" i]'
+                ],
+                value: userProfile.email || ''
+            },
+            // Phone fields
+            {
+                selectors: [
+                    'input[type="tel"]',
+                    'input[name*="phone" i]',
+                    'input[id*="phone" i]',
+                    'input[placeholder*="phone" i]',
+                    'input[name*="mobile" i]'
+                ],
+                value: userProfile.phone || ''
+            },
+            // Address fields
+            {
+                selectors: [
+                    'textarea[name*="address" i]',
+                    'input[name*="address" i]',
+                    'textarea[id*="address" i]',
+                    'input[id*="address" i]'
+                ],
+                value: userProfile.address || ''
+            },
+            // City fields
+            {
+                selectors: ['input[name*="city" i]', 'input[id*="city" i]'],
+                value: userProfile.city || ''
+            },
+            // State fields
+            {
+                selectors: ['input[name*="state" i]', 'input[id*="state" i]', 'input[name*="province" i]'],
+                value: userProfile.state || ''
+            },
+            // Zip code fields
+            {
+                selectors: ['input[name*="zip" i]', 'input[id*="zip" i]', 'input[name*="postal" i]'],
+                value: userProfile.zipCode || ''
+            },
+            // Country fields
+            {
+                selectors: ['input[name*="country" i]', 'input[id*="country" i]', 'select[name*="country" i]', 'select[id*="country" i]'],
+                value: userProfile.country || ''
+            },
+            // Education fields
+            {
+                selectors: ['textarea[name*="education" i]', 'textarea[id*="education" i]'],
+                value: userProfile.education || ''
+            },
+            // Experience fields
+            {
+                selectors: ['textarea[name*="experience" i]', 'textarea[id*="experience" i]', 'textarea[name*="work" i]'],
+                value: userProfile.experience || ''
+            },
+            // Skills fields
+            {
+                selectors: ['textarea[name*="skill" i]', 'textarea[id*="skill" i]'],
+                value: userProfile.skills || ''
+            },
+            // LinkedIn fields
+            {
+                selectors: ['input[name*="linkedin" i]', 'input[id*="linkedin" i]'],
+                value: userProfile.linkedin || ''
+            },
+            // Portfolio fields
+            {
+                selectors: ['input[name*="portfolio" i]', 'input[id*="portfolio" i]', 'input[name*="website" i]'],
+                value: userProfile.portfolio || ''
             }
-        }
-    });
-    
-    return filledCount;
-})()`;
-    }
+        ];
+
+        // Convert to simple selector/value pairs, filtering out empty values
+        const result = [];
+        fieldMappings.forEach(mapping => {
+            if (mapping.value && mapping.value.trim()) {
+                mapping.selectors.forEach(selector => {
+                    result.push({
+                        selector: selector,
+                        value: mapping.value
+                    });
+                });
+            }
+        });
+
+        return result;
 
     /**
-     * Creates a detailed prompt for the AI to analyze the page and generate autofill code
+     * Creates a detailed prompt for the AI to analyze the page and generate autofill data
      * @param {string} pageHTML - The HTML content of the page
      * @param {Object} userProfile - User profile data
      * @returns {string} Formatted prompt for the AI
@@ -233,7 +211,7 @@ class AIService {
         // Sanitize and truncate HTML if too long
         const sanitizedHTML = this.sanitizeHTML(pageHTML);
         
-        return `You are an expert web automation assistant. Your task is to analyze the provided HTML and generate JavaScript code that will intelligently fill job application form fields with the user's profile data.
+        return `You are an expert web automation assistant. Your task is to analyze the provided HTML and generate a structured JSON array that maps form fields to values using the user's profile data.
 
 USER PROFILE DATA:
 ${JSON.stringify(userProfile, null, 2)}
@@ -250,13 +228,9 @@ INSTRUCTIONS:
    - Context and surrounding elements
    - Field types (email, tel, url, text, etc.)
 
-3. Generate JavaScript code that:
-   - Uses document.querySelector() or similar to find each field
-   - Fills the field with the appropriate profile data
-   - Triggers necessary events (input, change, blur, focus) to ensure the change is registered
-   - Handles different field types (input, textarea, select) appropriately
-   - Skips fields that already contain non-placeholder values
-   - Returns a count of successfully filled fields
+3. Return a JSON array where each object has:
+   - "selector": A CSS selector to find the field (use the most specific one available)
+   - "value": The appropriate value from the user's profile data
 
 4. Be intelligent about field matching:
    - "first name", "fname", "given_name" → userProfile.firstName
@@ -266,34 +240,24 @@ INSTRUCTIONS:
    - And similar intelligent matching for all profile fields
 
 5. Handle edge cases:
-   - Multiple fields that could match the same profile data
+   - Multiple fields that could match the same profile data (include all)
    - Non-standard field naming conventions
    - Fields with unusual layouts or structures
 
-6. Return ONLY executable JavaScript code wrapped in a function, nothing else.
+6. Only include fields that have corresponding data in the user profile
+7. Use the most specific CSS selector possible (prefer ID > name > other attributes)
 
 EXAMPLE OUTPUT FORMAT:
-\`\`\`javascript
-(function() {
-    let filledCount = 0;
-    
-    // Example field filling logic
-    const firstNameField = document.querySelector('input[name="first_name"], input[id*="first"], input[placeholder*="first name" i]');
-    if (firstNameField && (!firstNameField.value || firstNameField.value === firstNameField.placeholder)) {
-        firstNameField.value = "${userProfile.firstName || ''}";
-        ['input', 'change', 'blur'].forEach(eventType => {
-            firstNameField.dispatchEvent(new Event(eventType, { bubbles: true }));
-        });
-        filledCount++;
-    }
-    
-    // Add more field filling logic...
-    
-    return filledCount;
-})();
+\`\`\`json
+[
+  {"selector": "input[id='first_name']", "value": "John"},
+  {"selector": "input[name='email']", "value": "john@example.com"},
+  {"selector": "textarea[id='education_background']", "value": "Bachelor's in Computer Science"},
+  {"selector": "select[name='country']", "value": "United States"}
+]
 \`\`\`
 
-Generate the JavaScript code now:`;
+Generate the JSON array now:`;
     }
 
     /**
@@ -328,29 +292,39 @@ Generate the JavaScript code now:`;
     }
 
     /**
-     * Extracts JavaScript code from the AI response
+     * Extracts JSON array from the AI response
      * @param {string} response - AI response text
-     * @returns {string} Extracted JavaScript code
+     * @returns {Array} Extracted JSON array of field mappings
      */
-    extractJavaScript(response) {
-        // Look for JavaScript code blocks
-        const jsBlockMatch = response.match(/```(?:javascript|js)?\s*([\s\S]*?)```/i);
-        if (jsBlockMatch) {
-            return jsBlockMatch[1].trim();
+    extractJSON(response) {
+        // Look for JSON code blocks
+        const jsonBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (jsonBlockMatch) {
+            try {
+                return JSON.parse(jsonBlockMatch[1].trim());
+            } catch (e) {
+                console.warn('Failed to parse JSON from code block:', e);
+            }
         }
         
-        // If no code block found, look for function patterns
-        const functionMatch = response.match(/\(function\(\)[^}]*\{[\s\S]*\}\)\(\);?/);
-        if (functionMatch) {
-            return functionMatch[0];
+        // Look for JSON array patterns
+        const arrayMatch = response.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+            try {
+                return JSON.parse(arrayMatch[0]);
+            } catch (e) {
+                console.warn('Failed to parse JSON array:', e);
+            }
         }
         
-        // Fallback: return the response as-is if it looks like JavaScript
-        if (response.includes('document.querySelector') || response.includes('function')) {
-            return response.trim();
+        // Try to parse the entire response as JSON
+        try {
+            return JSON.parse(response.trim());
+        } catch (e) {
+            console.warn('Failed to parse entire response as JSON:', e);
         }
         
-        throw new Error('Could not extract valid JavaScript code from AI response');
+        throw new Error('Could not extract valid JSON array from AI response');
     }
 }
 

@@ -128,40 +128,47 @@
             // Get the complete HTML of the page
             const pageHTML = document.documentElement.outerHTML;
             
-            // Generate JavaScript code using AI
+            // Generate field mappings using AI
             console.log('Calling Gemini API...');
-            const jsCode = await aiService.generateAutofillCode(pageHTML, profile);
+            const fieldMappings = await aiService.generateAutofillCode(pageHTML, profile);
             
-            console.log('Generated JavaScript code:', jsCode);
+            console.log('Generated field mappings:', fieldMappings);
             
-            // Execute the generated JavaScript code
+            if (!Array.isArray(fieldMappings)) {
+                throw new Error('AI response is not a valid array');
+            }
+            
+            // Process each field mapping
             let filledCount = 0;
-            try {
-                // Wrap the code in a try-catch for safe execution
-                const executeCode = new Function(`
-                    try {
-                        return (${jsCode});
-                    } catch (error) {
-                        console.error('Error executing AI-generated code:', error);
-                        return 0;
-                    }
-                `);
+            const processedElements = new Set(); // Avoid filling the same element multiple times
+            
+            for (const mapping of fieldMappings) {
+                if (!mapping.selector || !mapping.value) {
+                    continue;
+                }
                 
-                filledCount = executeCode() || 0;
-                
-                // Add visual feedback for filled fields
-                setTimeout(() => {
-                    const filledFields = document.querySelectorAll('input:not([value=""]), textarea:not(:empty)');
-                    filledFields.forEach(field => {
+                try {
+                    // Find the field using the selector
+                    const field = document.querySelector(mapping.selector);
+                    
+                    if (field && !processedElements.has(field)) {
+                        // Skip if field already has content (unless it's placeholder text)
                         if (field.value && field.value !== field.placeholder) {
+                            continue;
+                        }
+                        
+                        // Fill the field using the extension's native logic
+                        if (fillFieldByElement(field, mapping.value)) {
+                            filledCount++;
+                            processedElements.add(field);
+                            
+                            // Add visual feedback
                             highlightFilledField(field);
                         }
-                    });
-                }, 100);
-                
-            } catch (executionError) {
-                console.error('Error executing AI-generated code:', executionError);
-                throw new Error(`Code execution failed: ${executionError.message}`);
+                    }
+                } catch (selectorError) {
+                    console.warn('Error processing selector:', mapping.selector, selectorError);
+                }
             }
             
             return {
@@ -359,6 +366,35 @@
             }
         } catch (error) {
             console.error('Error filling field:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Fill a field by element (used by AI autofill)
+     * @param {HTMLElement} element - The form element to fill
+     * @param {string} value - The value to fill
+     * @returns {boolean} Success status
+     */
+    function fillFieldByElement(element, value) {
+        try {
+            // Skip if field already has content (unless it's placeholder text)
+            if (element.value && element.value !== element.placeholder) {
+                return false;
+            }
+
+            const tagName = element.tagName.toLowerCase();
+            
+            // Handle different field types
+            if (tagName === 'select') {
+                return fillSelectField(element, value);
+            } else if (tagName === 'textarea') {
+                return fillTextArea(element, value);
+            } else {
+                return fillInputField(element, value);
+            }
+        } catch (error) {
+            console.error('Error filling field by element:', error);
             return false;
         }
     }
