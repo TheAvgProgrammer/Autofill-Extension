@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Disable button and show loading state
             autofillBtn.disabled = true;
             autofillBtn.classList.add('loading');
-            showStatus('Scanning page for forms...', 'info');
+            showStatus('Analyzing page with AI...', 'info');
 
             // Get current active tab
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -123,10 +123,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
 
                         if (response && response.success) {
+                            const method = response.method === 'ai-powered' ? 'AI-powered' : 
+                                         response.method === 'regex-fallback' ? 'Regex-based (AI fallback)' : 'Standard';
                             const message = response.fieldsFound > 0 
-                                ? `Successfully filled ${response.fieldsFound} field(s)!`
+                                ? `${method} autofill: Successfully filled ${response.fieldsFound} field(s)!`
                                 : 'No matching form fields found on this page.';
                             showStatus(message, response.fieldsFound > 0 ? 'success' : 'info');
+                            
+                            // Show additional info for fallback cases
+                            if (response.method === 'regex-fallback' && response.aiError) {
+                                console.warn('AI autofill failed:', response.aiError);
+                            }
                         } else {
                             showStatus('Autofill completed. Check the page for filled fields.', 'info');
                         }
