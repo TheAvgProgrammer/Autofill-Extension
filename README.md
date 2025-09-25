@@ -78,7 +78,7 @@ The extension uses sophisticated field matching algorithms to identify form fiel
 
 The extension recognizes various naming conventions:
 
-- **Name fields**: `name`, `full_name`, `fullName`, `applicant_name`, `candidate_name`
+- **Name fields**: `name`, `full_name`, `first_name`, `last_name`, `applicant_name`, `candidate_name`
 - **Email fields**: `email`, `email_address`, `contact_email`, `e_mail`
 - **Phone fields**: `phone`, `telephone`, `phone_number`, `mobile`, `tel`
 - **Address fields**: `address`, `street_address`, `street`, `location`

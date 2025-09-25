@@ -4,12 +4,16 @@
 
     // Field mapping configuration
     const FIELD_MAPPINGS = {
-        fullName: {
-            keywords: ['name', 'full', 'firstname', 'lastname', 'fname', 'lname', 'applicant', 'candidate'],
-            priority: ['full name', 'name', 'full_name', 'fullname', 'first_name', 'last_name']
+        firstName: {
+            keywords: ['first name', 'firstname', 'given name', 'forename', 'first'],
+            priority: ['first_name', 'firstname', 'first']
+        },
+        lastName: {
+            keywords: ['last name', 'lastname', 'surname', 'family name', 'last'],
+            priority: ['last_name', 'lastname', 'last']
         },
         email: {
-            keywords: ['email', 'e-mail', 'mail', 'contact'],
+            keywords: ['email', 'e-mail', 'mail', 'contact', 'email address'],
             priority: ['email', 'e_mail', 'email_address', 'contact_email']
         },
         phone: {

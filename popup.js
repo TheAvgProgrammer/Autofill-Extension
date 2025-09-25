@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.storage.local.get(['userProfile'], (result) => {
             if (result.userProfile) {
                 const profile = result.userProfile;
-                
+                console.log('Loaded profile:', profile);
                 // Populate form fields with saved data
                 Object.keys(profile).forEach(key => {
                     const element = document.getElementById(key);
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Validate required fields
-        const requiredFields = ['fullName', 'email', 'phone'];
+        const requiredFields = ['firstName', 'lastName', 'email', 'phone'];
         const missingFields = requiredFields.filter(field => !profile[field]);
         
         if (missingFields.length > 0) {
