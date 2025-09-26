@@ -3,7 +3,7 @@ const SUPABASE_URL = "";
 const SUPABASE_KEY = "";
 let supabase;
 if (SUPABASE_URL && SUPABASE_KEY) {
-    supabase = window.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
