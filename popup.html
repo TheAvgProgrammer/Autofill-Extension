@@ -13,82 +13,50 @@
         </div>
         
         <div class="tabs">
+            <button id="loginTab" class="tab-button">Login</button>
             <button id="profileTab" class="tab-button active">Profile</button>
             <button id="autofillTab" class="tab-button">Autofill</button>
         </div>
 
+        <div id="loginSection" class="section">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" name="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <div id="loginStatus" class="status-message"></div>
+            </form>
+        </div>
+
         <div id="profileSection" class="section active">
             <form id="profileForm">
+                <!-- Existing profile fields -->
                 <div class="form-group">
                     <label for="firstName">First Name *</label>
                     <input type="text" id="firstName" name="firstName" required>
                 </div>
-
                 <div class="form-group">
                     <label for="lastName">Last Name *</label>
                     <input type="text" id="lastName" name="lastName" required>
                 </div>
-
                 <div class="form-group">
                     <label for="email">Email *</label>
                     <input type="email" id="email" name="email" required>
                 </div>
-
-                <div class="form-group">
-                    <label for="phone">Phone *</label>
-                    <input type="tel" id="phone" name="phone" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="address">Address</label>
-                    <textarea id="address" name="address" rows="3"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="city">City</label>
-                    <input type="text" id="city" name="city">
-                </div>
-
-                <div class="form-group">
-                    <label for="state">State/Province</label>
-                    <input type="text" id="state" name="state">
-                </div>
-
-                <div class="form-group">
-                    <label for="zipCode">ZIP/Postal Code</label>
-                    <input type="text" id="zipCode" name="zipCode">
-                </div>
-
-                <div class="form-group">
-                    <label for="country">Country</label>
-                    <input type="text" id="country" name="country">
-                </div>
-
-                <div class="form-group">
-                    <label for="education">Education</label>
-                    <textarea id="education" name="education" rows="3" placeholder="e.g., Bachelor's in Computer Science, University Name, 2020"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="experience">Work Experience</label>
-                    <textarea id="experience" name="experience" rows="4" placeholder="e.g., Software Developer at Company XYZ (2020-2023)"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="skills">Skills</label>
-                    <textarea id="skills" name="skills" rows="3" placeholder="e.g., JavaScript, Python, React, Node.js"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="linkedin">LinkedIn Profile</label>
-                    <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/yourprofile">
-                </div>
-
                 <div class="form-group">
                     <label for="portfolio">Portfolio/Website</label>
                     <input type="url" id="portfolio" name="portfolio" placeholder="https://yourportfolio.com">
                 </div>
-
+                <!-- Resume upload field -->
+                <div class="form-group">
+                    <label for="resume">Resume (PDF/DOC)</label>
+                    <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx">
+                </div>
                 <button type="submit" class="btn btn-primary">Save Profile</button>
             </form>
         </div>
@@ -96,27 +64,23 @@
         <div id="autofillSection" class="section">
             <div class="autofill-content">
                 <p class="info-text">Click the button below to automatically fill job application forms on this page with your saved profile data.</p>
-                
                 <button id="autofillBtn" class="btn btn-autofill">
-                    <span class="btn-icon">⚡</span>
+                    <span class="btn-icon">&#9889;</span>
                     Autofill Forms
                 </button>
-                
                 <div id="status" class="status-message"></div>
-                
                 <div class="help-text">
                     <p><strong>How it works:</strong></p>
                     <ul>
                         <li>Uses Google Gemini AI to intelligently analyze the page</li>
                         <li>AI identifies form fields regardless of naming conventions</li>
+                        <li>Uploads your resume if the job form has a file field</li>
                         <li>Automatically generates and executes custom filling logic</li>
-                        <li>Falls back to regex-based matching if AI is unavailable</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
-
     <script src="popup.js"></script>
 </body>
 </html>
