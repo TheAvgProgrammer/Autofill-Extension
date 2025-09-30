@@ -1,23 +1,55 @@
 # Job Application Autofill Extension
 
-...
+A Chrome extension that automatically fills job application forms with your saved profile data using intelligent pattern matching.
 
-## New Features
+## Features
 
-- **Resume upload**: You can now upload your resume file (PDF/DOC) in your profile tab. The extension will autofill resume upload fields when you click Autofill on job forms.
-- **Supabase login**: Added login tab for user authentication using Supabase. Please enter your Supabase keys in `popup.js`.
+- **Multi-Profile Support**: Store and manage up to 5 different profiles
+- **Comprehensive Profile Fields**: First Name, Last Name, LinkedIn URL, Email Address, Phone Number, Country, State, City, Pincode, and Resume File
+- **Intelligent Pattern Matching**: Uses regex-based field detection to identify form fields accurately
+- **Resume Upload**: Automatically uploads your resume file to file input fields
+- **Simple Interface**: Clean two-tab design (Profile & Autofill)
 
 ## How to Use
 
-1. Go to the Profile tab and fill in your info, including uploading your resume.
-2. (Optional) Log in via the Login tab.
-3. Click Autofill Forms to automatically fill and upload your resume on job application sites.
-4. Use `test.html` to test the autofill and resume upload feature.
+1. **Setup Profile**: Go to the Profile tab and fill in your information for any of the 5 available profiles
+2. **Select Profile**: Use the dropdown to switch between different profiles
+3. **Upload Resume**: Add your resume file (PDF/DOC/DOCX) to each profile
+4. **Autofill Forms**: Navigate to any job application page and click "Autofill Forms"
+
+## Profile Fields
+
+Each profile supports the following fields:
+- **First Name** * (Required)
+- **Last Name** * (Required)  
+- **Email Address** * (Required)
+- **Phone Number** * (Required)
+- **LinkedIn URL** (Optional)
+- **Country** * (Required)
+- **State/Province** * (Required)
+- **City** * (Required)
+- **Pincode/Zipcode** * (Required)
+- **Resume File** (Optional - PDF/DOC/DOCX)
 
 ## Testing
 
-- Profile saving and resume upload have been verified using Chrome's extension loader and the test form.
-- Resume file upload works with standard file input fields (browser restrictions may apply for some sites).
-- Authentication works once you enter your Supabase keys.
+Use the included `test.html` file to test the autofill functionality:
+1. Load the extension in Chrome (Developer mode)
+2. Open `test.html` in a new tab
+3. Set up a profile in the extension
+4. Click "Autofill Forms" to test the functionality
 
-...
+## How It Works
+
+The extension uses intelligent pattern matching to identify form fields based on:
+- Field names and IDs
+- Label text content
+- Placeholder text
+- ARIA labels
+- Field types (email, tel, url, text, etc.)
+
+## Privacy
+
+- All data is stored locally in your browser
+- No external services or APIs are used
+- Your information never leaves your device
