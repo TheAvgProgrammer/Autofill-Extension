@@ -1,42 +1,75 @@
+// Supabase auth config - fill in keys later
+const SUPABASE_URL = "";
+const SUPABASE_KEY = "";
+let supabase;
+if (SUPABASE_URL && SUPABASE_KEY) {
+    supabase = window.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab functionality
+    const loginTab = document.getElementById('loginTab');
     const profileTab = document.getElementById('profileTab');
     const autofillTab = document.getElementById('autofillTab');
+    const loginSection = document.getElementById('loginSection');
     const profileSection = document.getElementById('profileSection');
     const autofillSection = document.getElementById('autofillSection');
     const resumeInput = document.getElementById('resume');
 
     // Form elements
     const profileForm = document.getElementById('profileForm');
+    const loginForm = document.getElementById('loginForm');
     const autofillBtn = document.getElementById('autofillBtn');
     const statusDiv = document.getElementById('status');
+    const loginStatus = document.getElementById('loginStatus');
+    const resumeInput = document.getElementById('resume');
 
-    // Load saved profile data on startup
-    loadProfile();
-
-    // Tab switching
+    // Tabs
+    loginTab.addEventListener('click', () => switchTab('login'));
     profileTab.addEventListener('click', () => switchTab('profile'));
     autofillTab.addEventListener('click', () => switchTab('autofill'));
 
-    // Profile form submission
-    profileForm.addEventListener('submit', handleProfileSave);
-
-    // Autofill button
-    autofillBtn.addEventListener('click', handleAutofill);
-
     function switchTab(tab) {
+        [loginSection, profileSection, autofillSection].forEach(s => s.classList.remove('active'));
+        [loginTab, profileTab, autofillTab].forEach(b => b.classList.remove('active'));
+        if (tab === 'login') {
+            loginSection.classList.add('active'); loginTab.classList.add('active');
+        }
         if (tab === 'profile') {
-            profileTab.classList.add('active');
-            autofillTab.classList.remove('active');
-            profileSection.classList.add('active');
-            autofillSection.classList.remove('active');
-        } else {
-            autofillTab.classList.add('active');
-            profileTab.classList.remove('active');
-            autofillSection.classList.add('active');
-            profileSection.classList.remove('active');
+            profileSection.classList.add('active'); profileTab.classList.add('active');
+        }
+        if (tab === 'autofill') {
+            autofillSection.classList.add('active'); autofillTab.classList.add('active');
         }
     }
+
+    // Login form
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            loginStatus.textContent = 'Logging in...';
+            if (!supabase) {
+                loginStatus.textContent = "Supabase keys not configured.";
+                return;
+            }
+            const email = loginForm.loginEmail.value;
+            const password = loginForm.loginPassword.value;
+            try {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    loginStatus.textContent = 'Login failed: ' + error.message;
+                } else {
+                    loginStatus.textContent = 'Login successful!';
+                    setTimeout(() => switchTab('profile'), 1200);
+                }
+            } catch (err) {
+                loginStatus.textContent = 'Login error: ' + err.message;
+            }
+        });
+    }
+
+    // Load and save profile
+    loadProfile();
+    profileForm.addEventListener('submit', handleProfileSave);
 
     function loadProfile() {
         chrome.storage.local.get(['userProfile', 'resumeFile'], (result) => {
@@ -54,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function handleProfileSave(e) {
+    async function handleProfileSave(e) {
         e.preventDefault();
 
         const formData = new FormData(profileForm);
@@ -119,6 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    autofillBtn.addEventListener('click', handleAutofill);
+
     function handleAutofill() {
         // Check if profile exists
         chrome.storage.local.get(['userProfile', 'resumeFile'], (result) => {
@@ -127,30 +162,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 switchTab('profile');
                 return;
             }
-
-            // Disable button and show loading state
             autofillBtn.disabled = true;
             autofillBtn.classList.add('loading');
             showStatus('Analyzing page with AI...', 'info');
-
-            // Get current active tab
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0]) {
-                    // Send message to content script
+                    // Send resume file along with profile
                     chrome.tabs.sendMessage(tabs[0].id, {
                         action: 'autofill',
                         profile: result.userProfile,
                         resumeFile: result.resumeFile,
                     }, (response) => {
-                        // Re-enable button
                         autofillBtn.disabled = false;
                         autofillBtn.classList.remove('loading');
-
                         if (chrome.runtime.lastError) {
                             showStatus('Error: Could not access page. Try refreshing the page.', 'error');
                             return;
                         }
-
                         if (response && response.success) {
                             const method = response.method === 'ai-powered' ? 'AI-powered' : 
                                          response.method === 'regex-fallback' ? 'Regex-based (AI fallback)' : 'Standard';
@@ -158,8 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 ? `${method} autofill: Successfully filled ${response.fieldsFound} field(s)!`
                                 : 'No matching form fields found on this page.';
                             showStatus(message, response.fieldsFound > 0 ? 'success' : 'info');
-                            
-                            // Show additional info for fallback cases
                             if (response.method === 'regex-fallback' && response.aiError) {
                                 console.warn('AI autofill failed:', response.aiError);
                             }
@@ -172,27 +198,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function showStatus(message, type = 'info') {
-        statusDiv.textContent = message;
-        statusDiv.className = `status-message ${type}`;
-        
-        // Clear status after 5 seconds
-        setTimeout(() => {
-            statusDiv.textContent = '';
-            statusDiv.className = 'status-message';
-        }, 5000);
+    function showStatus(msg, type='info') {
+        statusDiv.textContent = msg;
+        statusDiv.className = 'status-message ' + type;
     }
-
-    // Clear status when switching tabs
-    function clearStatus() {
-        statusDiv.textContent = '';
-        statusDiv.className = 'status-message';
-    }
-
-    // Add clear status to tab switches
-    const originalSwitchTab = switchTab;
-    switchTab = function(tab) {
-        clearStatus();
-        originalSwitchTab(tab);
-    };
 });

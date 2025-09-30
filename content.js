@@ -1,71 +1,6 @@
-// Content script for Job Application Autofill Extension
 (function() {
-    'use strict';
+    // ... existing code and AIService integration ...
 
-    // Field mapping configuration
-    const FIELD_MAPPINGS = {
-        firstName: {
-            keywords: ['first name', 'firstname', 'given name', 'forename', 'first'],
-            priority: ['first_name', 'firstname', 'first']
-        },
-        lastName: {
-            keywords: ['last name', 'lastname', 'surname', 'family name', 'last'],
-            priority: ['last_name', 'lastname', 'last']
-        },
-        email: {
-            keywords: ['email', 'e-mail', 'mail', 'contact', 'email address'],
-            priority: ['email', 'e_mail', 'email_address', 'contact_email']
-        },
-        phone: {
-            keywords: ['phone', 'tel', 'telephone', 'mobile', 'cell', 'number'],
-            priority: ['phone', 'telephone', 'phone_number', 'mobile', 'tel']
-        },
-        address: {
-            keywords: ['address', 'street', 'location', 'addr'],
-            priority: ['address', 'street_address', 'street', 'addr', 'location']
-        },
-        city: {
-            keywords: ['city', 'town', 'locality'],
-            priority: ['city', 'town', 'locality']
-        },
-        state: {
-            keywords: ['state', 'province', 'region', 'county'],
-            priority: ['state', 'province', 'region', 'county']
-        },
-        zipCode: {
-            keywords: ['zip', 'postal', 'postcode', 'code'],
-            priority: ['zip', 'zipcode', 'zip_code', 'postal_code', 'postcode']
-        },
-        country: {
-            keywords: ['country', 'nation'],
-            priority: ['country', 'nation']
-        },
-        education: {
-            keywords: ['education', 'degree', 'school', 'university', 'college', 'qualification'],
-            priority: ['education', 'degree', 'qualifications', 'school']
-        },
-        experience: {
-            keywords: ['experience', 'work', 'employment', 'job', 'career', 'history'],
-            priority: ['experience', 'work_experience', 'employment', 'work_history']
-        },
-        skills: {
-            keywords: ['skills', 'skill', 'abilities', 'competencies', 'expertise'],
-            priority: ['skills', 'skill', 'abilities', 'competencies']
-        },
-        linkedin: {
-            keywords: ['linkedin', 'linked', 'social', 'profile'],
-            priority: ['linkedin', 'linked_in', 'linkedin_profile']
-        },
-        portfolio: {
-            keywords: ['portfolio', 'website', 'site', 'url', 'link', 'web'],
-            priority: ['portfolio', 'website', 'personal_website', 'portfolio_url']
-        }
-    };
-
-    // Initialize AI service
-    const aiService = new AIService();
-
-    // Listen for messages from popup
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
             // Use AI-powered autofill as primary method
@@ -79,7 +14,7 @@
                     fallbackResult.aiError = error.message;
                     sendResponse(fallbackResult);
                 });
-            return true; // Keep the message channel open for async response
+            return true; // async
         }
         return true;
     });
