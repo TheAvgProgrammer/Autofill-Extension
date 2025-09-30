@@ -6,6 +6,7 @@ if (SUPABASE_URL && SUPABASE_KEY) {
     supabase = window.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
+//dom content
 document.addEventListener('DOMContentLoaded', function() {
     const loginTab = document.getElementById('loginTab');
     const profileTab = document.getElementById('profileTab');
