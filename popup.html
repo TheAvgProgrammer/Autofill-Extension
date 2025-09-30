@@ -13,29 +13,26 @@
         </div>
         
         <div class="tabs">
-            <button id="loginTab" class="tab-button">Login</button>
             <button id="profileTab" class="tab-button active">Profile</button>
             <button id="autofillTab" class="tab-button">Autofill</button>
         </div>
 
-        <div id="loginSection" class="section">
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" name="loginEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" name="loginPassword" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-                <div id="loginStatus" class="status-message"></div>
-            </form>
-        </div>
+
 
         <div id="profileSection" class="section active">
+            <div class="profile-selector">
+                <label for="profileSelect">Select Profile:</label>
+                <select id="profileSelect" name="profileSelect">
+                    <option value="1">Profile 1</option>
+                    <option value="2">Profile 2</option>
+                    <option value="3">Profile 3</option>
+                    <option value="4">Profile 4</option>
+                    <option value="5">Profile 5</option>
+                </select>
+                <button id="deleteProfileBtn" class="btn btn-danger">Delete Profile</button>
+            </div>
+            
             <form id="profileForm">
-                <!-- Existing profile fields -->
                 <div class="form-group">
                     <label for="firstName">First Name *</label>
                     <input type="text" id="firstName" name="firstName" required>
@@ -45,16 +42,35 @@
                     <input type="text" id="lastName" name="lastName" required>
                 </div>
                 <div class="form-group">
-                    <label for="email">Email *</label>
+                    <label for="email">Email Address *</label>
                     <input type="email" id="email" name="email" required>
                 </div>
                 <div class="form-group">
-                    <label for="portfolio">Portfolio/Website</label>
-                    <input type="url" id="portfolio" name="portfolio" placeholder="https://yourportfolio.com">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required>
                 </div>
-
                 <div class="form-group">
-                    <label for="resume">Resume (PDF/DOC/DOCX)</label>
+                    <label for="linkedinUrl">LinkedIn URL</label>
+                    <input type="url" id="linkedinUrl" name="linkedinUrl" placeholder="https://linkedin.com/in/yourprofile">
+                </div>
+                <div class="form-group">
+                    <label for="country">Country *</label>
+                    <input type="text" id="country" name="country" required>
+                </div>
+                <div class="form-group">
+                    <label for="state">State/Province *</label>
+                    <input type="text" id="state" name="state" required>
+                </div>
+                <div class="form-group">
+                    <label for="city">City *</label>
+                    <input type="text" id="city" name="city" required>
+                </div>
+                <div class="form-group">
+                    <label for="pincode">Pincode/Zipcode *</label>
+                    <input type="text" id="pincode" name="pincode" required>
+                </div>
+                <div class="form-group">
+                    <label for="resume">Resume File (PDF/DOC/DOCX)</label>
                     <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx">
                 </div>
 
@@ -73,10 +89,10 @@
                 <div class="help-text">
                     <p><strong>How it works:</strong></p>
                     <ul>
-                        <li>Uses Google Gemini AI to intelligently analyze the page</li>
-                        <li>AI identifies form fields regardless of naming conventions</li>
-                        <li>Uploads your resume if the job form has a file field</li>
-                        <li>Automatically generates and executes custom filling logic</li>
+                        <li>Uses intelligent pattern matching to identify form fields</li>
+                        <li>Matches fields based on names, IDs, labels, and placeholders</li>
+                        <li>Uploads your resume file to file input fields</li>
+                        <li>Supports multiple profiles for different job applications</li>
                     </ul>
                 </div>
             </div>

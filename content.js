@@ -1,20 +1,49 @@
 (function() {
-    // ... existing code and AIService integration ...
+    // Field mappings for regex-based autofill
+    const FIELD_MAPPINGS = {
+        firstName: {
+            priority: ['firstname', 'first_name', 'fname', 'given_name'],
+            keywords: ['first', 'given', 'name']
+        },
+        lastName: {
+            priority: ['lastname', 'last_name', 'lname', 'surname', 'family_name'],
+            keywords: ['last', 'surname', 'family', 'name']
+        },
+        email: {
+            priority: ['email', 'email_address', 'e-mail', 'emailaddress'],
+            keywords: ['email', 'e-mail', 'mail']
+        },
+        phone: {
+            priority: ['phone', 'phone_number', 'phonenumber', 'mobile', 'tel', 'telephone'],
+            keywords: ['phone', 'mobile', 'tel', 'telephone', 'contact']
+        },
+        linkedinUrl: {
+            priority: ['linkedin', 'linkedin_url', 'linkedinurl', 'linkedin_profile'],
+            keywords: ['linkedin', 'profile', 'social']
+        },
+        country: {
+            priority: ['country', 'country_name'],
+            keywords: ['country', 'nation']
+        },
+        state: {
+            priority: ['state', 'province', 'region', 'state_province'],
+            keywords: ['state', 'province', 'region']
+        },
+        city: {
+            priority: ['city', 'town', 'locality'],
+            keywords: ['city', 'town', 'locality']
+        },
+        pincode: {
+            priority: ['pincode', 'zipcode', 'zip', 'postal_code', 'postcode'],
+            keywords: ['pin', 'zip', 'postal', 'code']
+        }
+    };
 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
-            // Use AI-powered autofill as primary method
-            performAIAutofill(request.profile, request.resumeFile)
-                .then(result => sendResponse(result))
-                .catch(error => {
-                    console.error('AI autofill failed, falling back to regex-based autofill:', error);
-                    // Fallback to original regex-based method
-                    const fallbackResult = performAutofill(request.profile, request.resumeFile);
-                    fallbackResult.method = 'regex-fallback';
-                    fallbackResult.aiError = error.message;
-                    sendResponse(fallbackResult);
-                });
-            return true; // async
+            // Use regex-based autofill
+            const result = performAutofill(request.profile, request.resumeFile);
+            sendResponse(result);
         }
         return true;
     });
@@ -53,74 +82,7 @@
         }
     }
 
-    /**
-     * AI-powered autofill using Google Gemini
-     * @param {Object} profile - User profile data
-     * @returns {Promise<Object>} Autofill result
-     */
-    async function performAIAutofill(profile, resumeFile) {
-        try {
-            console.log('Starting AI-powered autofill...');
-            
-            let filledCount = attachResumeToInputs(resumeFile);
 
-            // Get the complete HTML of the page
-            const pageHTML = document.documentElement.outerHTML;
-            
-            // Generate field mappings using AI
-            console.log('Calling Gemini API...');
-            const fieldMappings = await aiService.generateAutofillCode(pageHTML, profile);
-            
-            console.log('Generated field mappings:', fieldMappings);
-            
-            if (!Array.isArray(fieldMappings)) {
-                throw new Error('AI response is not a valid array');
-            }
-            
-            // Process each field mapping
-            const processedElements = new Set(); // Avoid filling the same element multiple times
-            
-            for (const mapping of fieldMappings) {
-                if (!mapping.selector || !mapping.value) {
-                    continue;
-                }
-                
-                try {
-                    // Find the field using the selector
-                    const field = document.querySelector(mapping.selector);
-                    
-                    if (field && !processedElements.has(field)) {
-                        // Skip if field already has content (unless it's placeholder text)
-                        if (field.value && field.value !== field.placeholder) {
-                            continue;
-                        }
-                        
-                        // Fill the field using the extension's native logic
-                        if (fillFieldByElement(field, mapping.value)) {
-                            filledCount++;
-                            processedElements.add(field);
-                            
-                            // Add visual feedback
-                            highlightFilledField(field);
-                        }
-                    }
-                } catch (selectorError) {
-                    console.warn('Error processing selector:', mapping.selector, selectorError);
-                }
-            }
-            
-            return {
-                success: true,
-                fieldsFound: filledCount,
-                method: 'ai-powered',
-                totalFields: document.querySelectorAll('input, textarea, select').length
-            };
-            
-        } catch (error) {
-            console.error('AI autofill error:', error);
-            throw error;
-        }
-    }
 
     function attachResumeToInputs(resumeFile) {
         if (!resumeFile || !resumeFile.data) {
@@ -336,34 +298,7 @@
         }
     }
 
-    /**
-     * Fill a field by element (used by AI autofill)
-     * @param {HTMLElement} element - The form element to fill
-     * @param {string} value - The value to fill
-     * @returns {boolean} Success status
-     */
-    function fillFieldByElement(element, value) {
-        try {
-            // Skip if field already has content (unless it's placeholder text)
-            if (element.value && element.value !== element.placeholder) {
-                return false;
-            }
 
-            const tagName = element.tagName.toLowerCase();
-            
-            // Handle different field types
-            if (tagName === 'select') {
-                return fillSelectField(element, value);
-            } else if (tagName === 'textarea') {
-                return fillTextArea(element, value);
-            } else {
-                return fillInputField(element, value);
-            }
-        } catch (error) {
-            console.error('Error filling field by element:', error);
-            return false;
-        }
-    }
 
     function fillInputField(element, value) {
         // Set the value
