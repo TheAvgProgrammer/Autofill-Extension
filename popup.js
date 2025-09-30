@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const autofillTab = document.getElementById('autofillTab');
     const profileSection = document.getElementById('profileSection');
     const autofillSection = document.getElementById('autofillSection');
-    
+    const resumeInput = document.getElementById('resume');
+
     // Form elements
     const profileForm = document.getElementById('profileForm');
     const autofillBtn = document.getElementById('autofillBtn');
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadProfile() {
-        chrome.storage.local.get(['userProfile'], (result) => {
+        chrome.storage.local.get(['userProfile', 'resumeFile'], (result) => {
             if (result.userProfile) {
                 const profile = result.userProfile;
                 console.log('Loaded profile:', profile);
@@ -55,45 +56,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleProfileSave(e) {
         e.preventDefault();
-        
+
         const formData = new FormData(profileForm);
         const profile = {};
-        
-        // Convert FormData to object
-        for (let [key, value] of formData.entries()) {
-            profile[key] = value.trim();
+
+        for (const [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                continue;
+            }
+
+            if (typeof value === 'string') {
+                profile[key] = value.trim();
+            } else {
+                profile[key] = value;
+            }
         }
 
-        // Validate required fields
         const requiredFields = ['firstName', 'lastName', 'email', 'phone'];
         const missingFields = requiredFields.filter(field => !profile[field]);
-        
+
         if (missingFields.length > 0) {
             showStatus('Please fill in all required fields: ' + missingFields.join(', '), 'error');
             return;
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(profile.email)) {
             showStatus('Please enter a valid email address', 'error');
             return;
         }
 
-        // Save to storage
-        chrome.storage.local.set({ userProfile: profile }, () => {
-            showStatus('Profile saved successfully!', 'success');
-            
-            // Auto-switch to autofill tab after saving
-            setTimeout(() => {
-                switchTab('autofill');
-            }, 1500);
-        });
+        const file = resumeInput.files[0];
+        const successMessage = file ? 'Profile and resume saved!' : 'Profile saved successfully!';
+
+        const saveToStorage = (resumeFileData) => {
+            chrome.storage.local.set({ userProfile: profile, resumeFile: resumeFileData }, () => {
+                showStatus(successMessage, 'success');
+
+                setTimeout(() => {
+                    switchTab('autofill');
+                }, 1500);
+            });
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                saveToStorage({
+                    name: file.name,
+                    type: file.type,
+                    data: reader.result
+                });
+            };
+            reader.onerror = () => {
+                showStatus('Failed to read the resume file. Please try again.', 'error');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            chrome.storage.local.get(['resumeFile'], (result) => {
+                saveToStorage(result.resumeFile || null);
+            });
+        }
     }
 
     function handleAutofill() {
         // Check if profile exists
-        chrome.storage.local.get(['userProfile'], (result) => {
+        chrome.storage.local.get(['userProfile', 'resumeFile'], (result) => {
             if (!result.userProfile) {
                 showStatus('Please save your profile first!', 'error');
                 switchTab('profile');
@@ -111,7 +139,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Send message to content script
                     chrome.tabs.sendMessage(tabs[0].id, {
                         action: 'autofill',
-                        profile: result.userProfile
+                        profile: result.userProfile,
+                        resumeFile: result.resumeFile,
                     }, (response) => {
                         // Re-enable button
                         autofillBtn.disabled = false;

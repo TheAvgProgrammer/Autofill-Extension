@@ -200,6 +200,7 @@ class AIService {
         });
 
         return result;
+    }
 
     /**
      * Creates a detailed prompt for the AI to analyze the page and generate autofill data

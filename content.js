@@ -69,12 +69,12 @@
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
             // Use AI-powered autofill as primary method
-            performAIAutofill(request.profile)
+            performAIAutofill(request.profile, request.resumeFile)
                 .then(result => sendResponse(result))
                 .catch(error => {
                     console.error('AI autofill failed, falling back to regex-based autofill:', error);
                     // Fallback to original regex-based method
-                    const fallbackResult = performAutofill(request.profile);
+                    const fallbackResult = performAutofill(request.profile, request.resumeFile);
                     fallbackResult.method = 'regex-fallback';
                     fallbackResult.aiError = error.message;
                     sendResponse(fallbackResult);
@@ -84,10 +84,12 @@
         return true;
     });
 
-    function performAutofill(profile) {
+    function performAutofill(profile, resumeFile) {
         try {
             const formFields = findFormFields();
             let fieldsFound = 0;
+
+            fieldsFound += attachResumeToInputs(resumeFile);
 
             // Process each profile field
             Object.keys(profile).forEach(profileKey => {
@@ -121,10 +123,12 @@
      * @param {Object} profile - User profile data
      * @returns {Promise<Object>} Autofill result
      */
-    async function performAIAutofill(profile) {
+    async function performAIAutofill(profile, resumeFile) {
         try {
             console.log('Starting AI-powered autofill...');
             
+            let filledCount = attachResumeToInputs(resumeFile);
+
             // Get the complete HTML of the page
             const pageHTML = document.documentElement.outerHTML;
             
@@ -139,7 +143,6 @@
             }
             
             // Process each field mapping
-            let filledCount = 0;
             const processedElements = new Set(); // Avoid filling the same element multiple times
             
             for (const mapping of fieldMappings) {
@@ -182,6 +185,34 @@
             console.error('AI autofill error:', error);
             throw error;
         }
+    }
+
+    function attachResumeToInputs(resumeFile) {
+        if (!resumeFile || !resumeFile.data) {
+            return 0;
+        }
+
+        let attachments = 0;
+        document.querySelectorAll("input[type='file']").forEach(el => {
+            try {
+                const base64Data = resumeFile.data.split(',')[1];
+                const binary = atob(base64Data);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                const fileObj = new File([bytes], resumeFile.name, { type: resumeFile.type });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(fileObj);
+                el.files = dataTransfer.files;
+                attachments += 1;
+            } catch (ex) {
+                console.warn('Resume attachment failed for input', ex);
+                el.setAttribute('data-autofill-failed', 'resume');
+            }
+        });
+
+        return attachments;
     }
 
     function findFormFields() {
