@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadProfile(profileId) {
         chrome.storage.local.get([`profile_${profileId}`, `resumeFile_${profileId}`], (result) => {
             const profile = result[`profile_${profileId}`];
+            const resumeFile = result[`resumeFile_${profileId}`];
             
             // Clear form first
             profileForm.reset();
@@ -67,6 +68,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            // Show resume file name if exists
+            updateResumeDisplay(resumeFile);
+            
             // Update profile selector label
             updateProfileLabel(profileId, profile);
         });
@@ -80,6 +84,39 @@ document.addEventListener('DOMContentLoaded', function() {
             option.textContent = `Profile ${profileId}`;
         }
     }
+
+    function updateResumeDisplay(resumeFile) {
+        const resumeInput = document.getElementById('resume');
+        const existingDisplay = document.getElementById('currentResume');
+        
+        // Remove existing display if any
+        if (existingDisplay) {
+            existingDisplay.remove();
+        }
+        
+        if (resumeFile && resumeFile.name) {
+            const resumeDisplay = document.createElement('div');
+            resumeDisplay.id = 'currentResume';
+            resumeDisplay.className = 'current-resume';
+            resumeDisplay.innerHTML = `
+                <span class="current-resume-text">Current: ${resumeFile.name}</span>
+                <button type="button" class="btn-remove-resume" onclick="removeCurrentResume()">×</button>
+            `;
+            resumeInput.parentNode.appendChild(resumeDisplay);
+        }
+    }
+
+    // Make removeCurrentResume globally available
+    window.removeCurrentResume = function() {
+        const currentResumeDiv = document.getElementById('currentResume');
+        if (currentResumeDiv) {
+            currentResumeDiv.remove();
+        }
+        // Clear the resume file from storage for current profile
+        chrome.storage.local.remove([`resumeFile_${currentProfileId}`], () => {
+            showStatus('Resume file removed', 'info');
+        });
+    };
 
     async function handleProfileSave(e) {
         e.preventDefault();
@@ -99,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'country', 'state', 'city', 'pincode'];
+        const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'country', 'state', 'city', 'pincode', 'usWorkEligible', 'sponsorshipRequired'];
         const missingFields = requiredFields.filter(field => !profile[field]);
 
         if (missingFields.length > 0) {

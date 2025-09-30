@@ -36,6 +36,14 @@
         pincode: {
             priority: ['pincode', 'zipcode', 'zip', 'postal_code', 'postcode'],
             keywords: ['pin', 'zip', 'postal', 'code']
+        },
+        usWorkEligible: {
+            priority: ['us_work_eligible', 'work_eligible', 'authorized_work', 'work_authorization', 'legal_work'],
+            keywords: ['work', 'eligible', 'authorized', 'authorization', 'legal', 'us', 'united', 'states']
+        },
+        sponsorshipRequired: {
+            priority: ['sponsorship_required', 'visa_sponsorship', 'sponsorship', 'require_sponsorship', 'need_sponsorship'],
+            keywords: ['sponsorship', 'sponsor', 'visa', 'require', 'need', 'future']
         }
     };
 
