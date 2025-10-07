@@ -2,12 +2,16 @@
     // Field mappings for regex-based autofill
     const FIELD_MAPPINGS = {
         firstName: {
-            priority: ['firstname', 'first_name', 'fname', 'given_name'],
-            keywords: ['first', 'given', 'name']
+            priority: ['firstname', 'first_name', 'fname', 'given_name', 'givenname', 'forename', 'first-name'],
+            keywords: ['first', 'given', 'forename', 'name']
         },
         lastName: {
-            priority: ['lastname', 'last_name', 'lname', 'surname', 'family_name'],
+            priority: ['lastname', 'last_name', 'lname', 'surname', 'family_name', 'familyname', 'last-name'],
             keywords: ['last', 'surname', 'family', 'name']
+        },
+        fullName: {
+            priority: ['fullname', 'full_name', 'name', 'full-name', 'completename', 'complete_name'],
+            keywords: ['full', 'complete', 'name']
         },
         email: {
             priority: ['email', 'email_address', 'e-mail', 'emailaddress'],
@@ -38,12 +42,12 @@
             keywords: ['pin', 'zip', 'postal', 'code']
         },
         usWorkEligible: {
-            priority: ['us_work_eligible', 'work_eligible', 'authorized_work', 'work_authorization', 'legal_work'],
-            keywords: ['work', 'eligible', 'authorized', 'authorization', 'legal', 'us', 'united', 'states']
+            priority: ['us_work_eligible', 'work_eligible', 'authorized_work', 'work_authorization', 'legal_work', 'work_authorized', 'us_authorized', 'legally_authorized', 'us-work-eligible'],
+            keywords: ['work', 'eligible', 'authorized', 'authorization', 'legal', 'us', 'united', 'states', 'legally']
         },
         sponsorshipRequired: {
-            priority: ['sponsorship_required', 'visa_sponsorship', 'sponsorship', 'require_sponsorship', 'need_sponsorship'],
-            keywords: ['sponsorship', 'sponsor', 'visa', 'require', 'need', 'future']
+            priority: ['sponsorship_required', 'visa_sponsorship', 'sponsorship', 'require_sponsorship', 'need_sponsorship', 'visa_support', 'require-sponsorship', 'need-sponsorship'],
+            keywords: ['sponsorship', 'sponsor', 'visa', 'require', 'need', 'future', 'employment']
         }
     };
 
@@ -63,13 +67,19 @@
 
             fieldsFound += attachResumeToInputs(resumeFile);
 
+            // Create fullName from firstName and lastName if needed
+            const enrichedProfile = { ...profile };
+            if (profile.firstName && profile.lastName && !profile.fullName) {
+                enrichedProfile.fullName = `${profile.firstName} ${profile.lastName}`;
+            }
+
             // Process each profile field
-            Object.keys(profile).forEach(profileKey => {
-                if (profile[profileKey] && profile[profileKey].trim()) {
+            Object.keys(enrichedProfile).forEach(profileKey => {
+                if (enrichedProfile[profileKey] && enrichedProfile[profileKey].trim()) {
                     const matchedFields = findMatchingFields(formFields, profileKey);
                     
                     matchedFields.forEach(field => {
-                        if (fillField(field, profile[profileKey])) {
+                        if (fillField(field, enrichedProfile[profileKey])) {
                             fieldsFound++;
                         }
                     });
@@ -129,6 +139,7 @@
             'input[type="email"]',
             'input[type="tel"]',
             'input[type="url"]',
+            'input[type="radio"]',
             'input:not([type])',
             'textarea',
             'select'
@@ -288,7 +299,7 @@
             const element = fieldInfo.element;
             
             // Skip if field already has content (unless it's placeholder text)
-            if (element.value && element.value !== element.placeholder) {
+            if (element.value && element.value !== element.placeholder && element.type !== 'radio') {
                 return false;
             }
 
@@ -297,6 +308,8 @@
                 return fillSelectField(element, value);
             } else if (fieldInfo.tagName === 'textarea') {
                 return fillTextArea(element, value);
+            } else if (fieldInfo.type === 'radio') {
+                return fillRadioField(element, value);
             } else {
                 return fillInputField(element, value);
             }
@@ -346,6 +359,41 @@
             element.value = matchingOption.value;
             triggerEvents(element);
             return true;
+        }
+
+        return false;
+    }
+
+    function fillRadioField(element, value) {
+        // For radio buttons, find all radio buttons with the same name
+        const name = element.name;
+        if (!name) {
+            return false;
+        }
+
+        const radioButtons = document.querySelectorAll(`input[type="radio"][name="${name}"]`);
+        
+        // Try to match value against radio button values or labels
+        for (const radio of radioButtons) {
+            const radioValue = radio.value.toLowerCase();
+            const normalizedValue = value.toLowerCase().trim();
+            
+            // Check if the value matches
+            if (radioValue === normalizedValue || 
+                radioValue.includes(normalizedValue) ||
+                normalizedValue.includes(radioValue)) {
+                radio.checked = true;
+                triggerEvents(radio);
+                return true;
+            }
+            
+            // Also check the label text
+            const label = findAssociatedLabel(radio);
+            if (label && label.toLowerCase().includes(normalizedValue)) {
+                radio.checked = true;
+                triggerEvents(radio);
+                return true;
+            }
         }
 
         return false;

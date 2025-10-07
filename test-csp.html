@@ -185,6 +185,42 @@
                 </select>
             </div>
 
+            <!-- Full Name Field Test -->
+            <div class="form-group">
+                <label for="fullname">Full Name</label>
+                <input type="text" id="fullname" name="fullname" placeholder="Enter your complete name">
+            </div>
+
+            <!-- Radio Button Tests for Work Authorization -->
+            <div class="form-group">
+                <label>US Work Authorization (Radio):</label>
+                <div style="display: flex; gap: 20px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="work_eligible_radio" value="yes" style="width: auto;">
+                        Yes
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="work_eligible_radio" value="no" style="width: auto;">
+                        No
+                    </label>
+                </div>
+            </div>
+
+            <!-- Radio Button Tests for Sponsorship -->
+            <div class="form-group">
+                <label>Visa Sponsorship Required (Radio):</label>
+                <div style="display: flex; gap: 20px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="sponsorship_radio" value="yes" style="width: auto;">
+                        Yes
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="sponsorship_radio" value="no" style="width: auto;">
+                        No
+                    </label>
+                </div>
+            </div>
+
             <button type="submit" class="submit-btn">Submit Application</button>
         </form>
     </div>
