@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'country', 'state', 'city', 'pincode', 'usWorkEligible', 'sponsorshipRequired'];
+        const requiredFields = ['firstName', 'lastName', 'email', 'countryCode', 'phone', 'country', 'state', 'city', 'pincode', 'usWorkEligible', 'sponsorshipRequired'];
         const missingFields = requiredFields.filter(field => !profile[field]);
 
         if (missingFields.length > 0) {
