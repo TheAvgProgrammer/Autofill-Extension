@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manual Autofill Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .profile, .form {
+            flex: 1;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .filled {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #d1ecf1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Manual Autofill Test</h1>
+    <p>This page simulates the autofill logic to verify country code + phone combination and "How did you hear about us?" field work correctly.</p>
+    
+    <div class="container">
+        <div class="profile">
+            <h2>Saved Profile</h2>
+            <div class="form-group">
+                <label>First Name:</label>
+                <input type="text" id="profile_firstName" value="John">
+            </div>
+            <div class="form-group">
+                <label>Last Name:</label>
+                <input type="text" id="profile_lastName" value="Doe">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="profile_email" value="john.doe@example.com">
+            </div>
+            <div class="form-group">
+                <label>Country Code:</label>
+                <input type="text" id="profile_countryCode" value="+1">
+            </div>
+            <div class="form-group">
+                <label>Phone Number:</label>
+                <input type="tel" id="profile_phone" value="5551234567">
+            </div>
+            <div class="form-group">
+                <label>Country:</label>
+                <input type="text" id="profile_country" value="United States">
+            </div>
+            <div class="form-group">
+                <label>State:</label>
+                <input type="text" id="profile_state" value="California">
+            </div>
+            <div class="form-group">
+                <label>City:</label>
+                <input type="text" id="profile_city" value="San Francisco">
+            </div>
+            <div class="form-group">
+                <label>Pincode:</label>
+                <input type="text" id="profile_pincode" value="94102">
+            </div>
+            <div class="form-group">
+                <label>US Work Eligible:</label>
+                <select id="profile_usWorkEligible">
+                    <option value="yes" selected>Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Sponsorship Required:</label>
+                <select id="profile_sponsorshipRequired">
+                    <option value="yes">Yes</option>
+                    <option value="no" selected>No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>How Did You Hear:</label>
+                <select id="profile_howDidYouHear">
+                    <option value="LinkedIn" selected>LinkedIn</option>
+                    <option value="Google">Google</option>
+                    <option value="Twitter">Twitter</option>
+                    <option value="Friend">Friend</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <button onclick="performAutofill()">Autofill Form ➡️</button>
+        </div>
+
+        <div class="form">
+            <h2>Job Application Form</h2>
+            <div class="form-group">
+                <label>First Name *</label>
+                <input type="text" id="first_name" name="first_name">
+            </div>
+            <div class="form-group">
+                <label>Last Name *</label>
+                <input type="text" id="last_name" name="last_name">
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="full_name" name="full_name">
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="email" name="email">
+            </div>
+            <div class="form-group">
+                <label>Phone Number *</label>
+                <input type="tel" id="phone" name="phone">
+            </div>
+            <div class="form-group">
+                <label>Mobile Phone</label>
+                <input type="tel" id="mobile" name="mobile">
+            </div>
+            <div class="form-group">
+                <label>Country</label>
+                <select id="country" name="country">
+                    <option value="">Select Country</option>
+                    <option value="United States">United States</option>
+                    <option value="Canada">Canada</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>State</label>
+                <input type="text" id="state" name="state">
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" id="city" name="city">
+            </div>
+            <div class="form-group">
+                <label>ZIP Code</label>
+                <input type="text" id="zipcode" name="zipcode">
+            </div>
+            <div class="form-group">
+                <label>Work Authorization</label>
+                <select id="work_auth" name="work_auth">
+                    <option value="">Please select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Visa Sponsorship</label>
+                <select id="sponsorship" name="sponsorship">
+                    <option value="">Please select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>How did you hear about us?</label>
+                <select id="how_did_you_hear" name="referral_source">
+                    <option value="">Please select</option>
+                    <option value="LinkedIn">LinkedIn</option>
+                    <option value="Google">Google</option>
+                    <option value="Twitter">Twitter</option>
+                    <option value="Friend">Friend</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="results" class="result" style="display: none;"></div>
+
+    <script>
+        function performAutofill() {
+            // Get profile data
+            const profile = {
+                firstName: document.getElementById('profile_firstName').value,
+                lastName: document.getElementById('profile_lastName').value,
+                email: document.getElementById('profile_email').value,
+                countryCode: document.getElementById('profile_countryCode').value,
+                phone: document.getElementById('profile_phone').value,
+                country: document.getElementById('profile_country').value,
+                state: document.getElementById('profile_state').value,
+                city: document.getElementById('profile_city').value,
+                pincode: document.getElementById('profile_pincode').value,
+                usWorkEligible: document.getElementById('profile_usWorkEligible').value,
+                sponsorshipRequired: document.getElementById('profile_sponsorshipRequired').value,
+                howDidYouHear: document.getElementById('profile_howDidYouHear').value
+            };
+
+            // Enrich profile (simulate content.js logic)
+            const enrichedProfile = { ...profile };
+            
+            // Generate full name
+            if (profile.firstName && profile.lastName) {
+                enrichedProfile.fullName = `${profile.firstName} ${profile.lastName}`;
+            }
+            
+            // Combine country code + phone
+            if (profile.countryCode && profile.phone) {
+                enrichedProfile.phone = `${profile.countryCode} ${profile.phone}`;
+            }
+
+            // Fill form fields
+            let results = [];
+            
+            // Fill first name
+            if (document.getElementById('first_name')) {
+                document.getElementById('first_name').value = enrichedProfile.firstName;
+                document.getElementById('first_name').classList.add('filled');
+                results.push('✓ First Name: ' + enrichedProfile.firstName);
+            }
+            
+            // Fill last name
+            if (document.getElementById('last_name')) {
+                document.getElementById('last_name').value = enrichedProfile.lastName;
+                document.getElementById('last_name').classList.add('filled');
+                results.push('✓ Last Name: ' + enrichedProfile.lastName);
+            }
+            
+            // Fill full name
+            if (document.getElementById('full_name')) {
+                document.getElementById('full_name').value = enrichedProfile.fullName;
+                document.getElementById('full_name').classList.add('filled');
+                results.push('✓ Full Name: ' + enrichedProfile.fullName);
+            }
+            
+            // Fill email
+            if (document.getElementById('email')) {
+                document.getElementById('email').value = enrichedProfile.email;
+                document.getElementById('email').classList.add('filled');
+                results.push('✓ Email: ' + enrichedProfile.email);
+            }
+            
+            // Fill phone (combined with country code)
+            if (document.getElementById('phone')) {
+                document.getElementById('phone').value = enrichedProfile.phone;
+                document.getElementById('phone').classList.add('filled');
+                results.push('✓ Phone: ' + enrichedProfile.phone + ' (combined from ' + profile.countryCode + ' + ' + profile.phone + ')');
+            }
+            
+            // Fill mobile (also with combined phone)
+            if (document.getElementById('mobile')) {
+                document.getElementById('mobile').value = enrichedProfile.phone;
+                document.getElementById('mobile').classList.add('filled');
+                results.push('✓ Mobile: ' + enrichedProfile.phone);
+            }
+            
+            // Fill country
+            if (document.getElementById('country')) {
+                document.getElementById('country').value = enrichedProfile.country;
+                document.getElementById('country').classList.add('filled');
+                results.push('✓ Country: ' + enrichedProfile.country);
+            }
+            
+            // Fill state
+            if (document.getElementById('state')) {
+                document.getElementById('state').value = enrichedProfile.state;
+                document.getElementById('state').classList.add('filled');
+                results.push('✓ State: ' + enrichedProfile.state);
+            }
+            
+            // Fill city
+            if (document.getElementById('city')) {
+                document.getElementById('city').value = enrichedProfile.city;
+                document.getElementById('city').classList.add('filled');
+                results.push('✓ City: ' + enrichedProfile.city);
+            }
+            
+            // Fill zipcode
+            if (document.getElementById('zipcode')) {
+                document.getElementById('zipcode').value = enrichedProfile.pincode;
+                document.getElementById('zipcode').classList.add('filled');
+                results.push('✓ ZIP Code: ' + enrichedProfile.pincode);
+            }
+            
+            // Fill work auth
+            if (document.getElementById('work_auth')) {
+                document.getElementById('work_auth').value = enrichedProfile.usWorkEligible;
+                document.getElementById('work_auth').classList.add('filled');
+                results.push('✓ Work Authorization: ' + enrichedProfile.usWorkEligible);
+            }
+            
+            // Fill sponsorship
+            if (document.getElementById('sponsorship')) {
+                document.getElementById('sponsorship').value = enrichedProfile.sponsorshipRequired;
+                document.getElementById('sponsorship').classList.add('filled');
+                results.push('✓ Sponsorship: ' + enrichedProfile.sponsorshipRequired);
+            }
+            
+            // Fill how did you hear
+            if (document.getElementById('how_did_you_hear')) {
+                document.getElementById('how_did_you_hear').value = enrichedProfile.howDidYouHear;
+                document.getElementById('how_did_you_hear').classList.add('filled');
+                results.push('✓ How Did You Hear: ' + enrichedProfile.howDidYouHear);
+            }
+
+            // Show results
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>Autofill Results</h3><ul>' + 
+                results.map(r => '<li>' + r + '</li>').join('') + 
+                '</ul>';
+            resultsDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
