@@ -1,3 +1,6 @@
+const SUPABASE_WORK_PROOF_URL = 'http://localhost:3000/api/v1/upload';
+const SUPABASE_ANON_KEY = 'SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc3FtdXZnbm9seW1ydWdwcmZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MTIyMjcsImV4cCI6MjA3MDQ4ODIyN30.6eS8BFIJmTqZ_2v8oLsE9tvEUvBEBJ4zIeAVVLbcwF8'
+
 document.addEventListener('DOMContentLoaded', function() {
     const profileTab = document.getElementById('profileTab');
     const autofillTab = document.getElementById('autofillTab');
@@ -11,8 +14,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileForm = document.getElementById('profileForm');
     const autofillBtn = document.getElementById('autofillBtn');
     const statusDiv = document.getElementById('status');
+    const screenshotBtn = document.getElementById('screenshotBtn');
+    const screenshotPreview = document.getElementById('screenshotPreview');
+    const screenshotImage = document.getElementById('screenshotImage');
+    const sendProofBtn = document.getElementById('sendProofBtn');
 
     let currentProfileId = '1';
+    let lastScreenshotDataUrl = null;
+
+    function updateSendProofButton(isEnabled) {
+        if (sendProofBtn) {
+            sendProofBtn.disabled = !isEnabled;
+        }
+    }
+
 
     // Tabs
     profileTab.addEventListener('click', () => switchTab('profile'));
@@ -198,6 +213,138 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     autofillBtn.addEventListener('click', handleAutofill);
+    if (screenshotBtn) {
+        screenshotBtn.addEventListener('click', handleScreenshotCapture);
+    }
+    if (sendProofBtn) {
+        sendProofBtn.addEventListener('click', handleSendProof);
+        updateSendProofButton(false);
+    }
+
+    function handleScreenshotCapture() {
+        if (!screenshotBtn) {
+            return;
+        }
+
+        screenshotBtn.disabled = true;
+        showStatus('Capturing screenshot...', 'info');
+        updateSendProofButton(false);
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (chrome.runtime.lastError) {
+                screenshotBtn.disabled = false;
+                showStatus(`Failed to access the active tab: ${chrome.runtime.lastError.message}`, 'error');
+                updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                return;
+            }
+
+            const activeTab = tabs && tabs.length ? tabs[0] : null;
+            if (!activeTab) {
+                screenshotBtn.disabled = false;
+                showStatus('No active tab found to capture.', 'error');
+                updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                return;
+            }
+
+            chrome.tabs.captureVisibleTab(activeTab.windowId, { format: 'png' }, (dataUrl) => {
+                screenshotBtn.disabled = false;
+                if (chrome.runtime.lastError) {
+                    showStatus(`Failed to capture screenshot: ${chrome.runtime.lastError.message}`, 'error');
+                    updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                    return;
+                }
+
+                if (!dataUrl) {
+                    showStatus('Failed to capture screenshot. Please try again.', 'error');
+                    updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                    return;
+                }
+
+                if (screenshotImage) {
+                    screenshotImage.src = dataUrl;
+                }
+                if (screenshotPreview) {
+                    screenshotPreview.classList.remove('hidden');
+                }
+
+                lastScreenshotDataUrl = dataUrl;
+                updateSendProofButton(true);
+                showStatus('Screenshot captured. Ready to send proof.', 'success');
+            });
+        });
+    }
+    function handleSendProof() {
+        if (!lastScreenshotDataUrl) {
+            showStatus('Please capture a screenshot before sending proof.', 'error');
+            return;
+        }
+
+        sendScreenshotToSupabase(lastScreenshotDataUrl);
+    }
+
+
+    function sendScreenshotToSupabase(dataUrl) {
+        if (!dataUrl) {
+            showStatus('No screenshot available to send. Please capture one first.', 'error');
+            updateSendProofButton(Boolean(lastScreenshotDataUrl));
+            return;
+        }
+
+        updateSendProofButton(false);
+
+        chrome.storage.local.get([`profile_${currentProfileId}`], (result) => {
+            const profile = result[`profile_${currentProfileId}`];
+
+            if (!profile) {
+                showStatus('Screenshot ready, but no saved profile found to identify the client.', 'warning');
+                updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                return;
+            }
+
+            const firstName = (profile.firstName || '').trim();
+            const lastName = (profile.lastName || '').trim();
+            const clientName = [firstName, lastName].filter(Boolean).join(' ');
+
+            if (!clientName) {
+                showStatus('Screenshot ready, but the profile is missing a first or last name.', 'error');
+                updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                return;
+            }
+
+            if (!SUPABASE_WORK_PROOF_URL) {
+                console.warn('Supabase work proof endpoint is not configured.');
+                showStatus('Screenshot captured. Add your Supabase endpoint to upload proof.', 'warning');
+                updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                return;
+            }
+
+            showStatus('Uploading screenshot to Supabase...', 'info');
+
+            fetch(SUPABASE_WORK_PROOF_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    client_name: clientName,
+                    screenshot: dataUrl
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    showStatus('Screenshot uploaded to Supabase successfully!', 'success');
+                })
+                .catch(error => {
+                    console.error('Failed to upload screenshot to Supabase:', error);
+                    showStatus(`Screenshot captured, but upload failed: ${error.message}`, 'error');
+                })
+                .finally(() => {
+                    updateSendProofButton(Boolean(lastScreenshotDataUrl));
+                });
+        });
+    }
 
     function handleAutofill() {
         // Check if current profile exists
@@ -254,3 +401,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+

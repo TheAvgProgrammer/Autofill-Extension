@@ -61,6 +61,7 @@
     });
 
     function performAutofill(profile, resumeFile) {
+        console.log('Starting autofill with profile:', profile);
         try {
             const formFields = findFormFields();
             let fieldsFound = 0;
@@ -73,16 +74,14 @@
                 enrichedProfile.fullName = `${profile.firstName} ${profile.lastName}`;
             }
 
+            console.log(enrichedProfile)
+
             // Process each profile field
             Object.keys(enrichedProfile).forEach(profileKey => {
                 if (enrichedProfile[profileKey] && enrichedProfile[profileKey].trim()) {
                     const matchedFields = findMatchingFields(formFields, profileKey);
-                    
-                    matchedFields.forEach(field => {
-                        if (fillField(field, enrichedProfile[profileKey])) {
-                            fieldsFound++;
-                        }
-                    });
+                    // console.log("Matched fields: ", matchedFields, " for profile key: ", profileKey, " with value: ", enrichedProfile[profileKey]);
+                    fillField(matchedFields[0], enrichedProfile[profileKey])
                 }
             });
 
@@ -291,6 +290,10 @@
         );
         score += exactMatches.length * 15;
 
+        if (score > 0) {
+            // console.log('Field matched:', field, 'Score:', score);
+        }
+
         return score;
     }
 
@@ -324,7 +327,7 @@
     function fillInputField(element, value) {
         // Set the value
         element.value = value;
-        
+        // console.log("Filling input: ", element, " with value: ", value);
         // Trigger events to ensure the change is registered
         triggerEvents(element);
         
@@ -333,6 +336,7 @@
 
     function fillTextArea(element, value) {
         element.value = value;
+        console.log("Filling textarea: ", element, " with value: ", value);
         triggerEvents(element);
         return true;
     }

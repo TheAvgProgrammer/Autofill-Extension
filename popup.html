@@ -101,7 +101,18 @@
                     <span class="btn-icon">&#9889;</span>
                     Autofill Forms
                 </button>
+                <button id="screenshotBtn" class="btn btn-screenshot">
+                    <span class="btn-icon">&#128247;</span>
+                    Capture Screenshot
+                </button>
                 <div id="status" class="status-message"></div>
+                <div id="screenshotPreview" class="screenshot-preview hidden" aria-live="polite">
+                    <img id="screenshotImage" alt="Captured tab screenshot preview">
+                </div>
+                <button id="sendProofBtn" class="btn btn-send-proof" disabled>
+                    <span class="btn-icon">&#128228;</span>
+                    Send Proof
+                </button>
                 <div class="help-text">
                     <p><strong>How it works:</strong></p>
                     <ul>
@@ -117,3 +128,5 @@
     <script src="popup.js"></script>
 </body>
 </html>
+
+
