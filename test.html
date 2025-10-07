@@ -193,6 +193,42 @@
                 </select>
             </div>
 
+            <!-- Full Name Field Test -->
+            <div class="form-group">
+                <label for="full_name_field">Full Name</label>
+                <input type="text" id="full_name_field" name="full_name" placeholder="Enter your full name">
+            </div>
+
+            <!-- Radio Button Tests for Work Authorization -->
+            <div class="form-group">
+                <label>US Work Authorization (Radio):</label>
+                <div style="display: flex; gap: 20px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="work_auth_radio" value="yes" style="width: auto;">
+                        Yes, I am authorized
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="work_auth_radio" value="no" style="width: auto;">
+                        No, not authorized
+                    </label>
+                </div>
+            </div>
+
+            <!-- Radio Button Tests for Sponsorship -->
+            <div class="form-group">
+                <label>Visa Sponsorship Required (Radio):</label>
+                <div style="display: flex; gap: 20px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="sponsor_radio" value="yes" style="width: auto;">
+                        Yes
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="radio" name="sponsor_radio" value="no" style="width: auto;">
+                        No
+                    </label>
+                </div>
+            </div>
+
             <button type="submit" class="submit-btn">Submit Application</button>
         </form>
     </div>
