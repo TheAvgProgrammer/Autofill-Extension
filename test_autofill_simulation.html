@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autofill Test Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .pass {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .fail {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        h2 {
+            margin-top: 30px;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Autofill Extension Test Results</h1>
+    <div id="results"></div>
+
+    <script>
+        const FIELD_MAPPINGS = {
+            firstName: {
+                priority: ['firstname', 'first_name', 'fname', 'given_name', 'givenname', 'forename', 'first-name'],
+                keywords: ['first', 'given', 'forename', 'name']
+            },
+            lastName: {
+                priority: ['lastname', 'last_name', 'lname', 'surname', 'family_name', 'familyname', 'last-name'],
+                keywords: ['last', 'surname', 'family', 'name']
+            },
+            fullName: {
+                priority: ['fullname', 'full_name', 'name', 'full-name', 'completename', 'complete_name'],
+                keywords: ['full', 'complete', 'name']
+            },
+            email: {
+                priority: ['email', 'email_address', 'e-mail', 'emailaddress'],
+                keywords: ['email', 'e-mail', 'mail']
+            },
+            phone: {
+                priority: ['phone', 'phone_number', 'phonenumber', 'mobile', 'tel', 'telephone'],
+                keywords: ['phone', 'mobile', 'tel', 'telephone', 'contact']
+            },
+            howDidYouHear: {
+                priority: ['how_did_you_hear', 'howdidyouhear', 'referral_source', 'referral', 'source', 'hear_about', 'heard_about', 'how-did-you-hear'],
+                keywords: ['how', 'hear', 'about', 'referral', 'source', 'found', 'learn']
+            }
+        };
+
+        const mockProfile = {
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john.doe@example.com',
+            countryCode: '+1',
+            phone: '5551234567',
+            linkedinUrl: 'https://linkedin.com/in/johndoe',
+            country: 'United States',
+            state: 'California',
+            city: 'San Francisco',
+            pincode: '94102',
+            usWorkEligible: 'yes',
+            sponsorshipRequired: 'no',
+            howDidYouHear: 'LinkedIn'
+        };
+
+        function logResult(message, isPass, details = '') {
+            const div = document.createElement('div');
+            div.className = `test-result ${isPass ? 'pass' : 'fail'}`;
+            div.innerHTML = `<strong>${isPass ? '✓' : '✗'} ${message}</strong>`;
+            if (details) {
+                div.innerHTML += `<br><code>${details}</code>`;
+            }
+            document.getElementById('results').appendChild(div);
+        }
+
+        function logInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `<strong>ℹ ${message}</strong>`;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function addHeader(text) {
+            const h2 = document.createElement('h2');
+            h2.textContent = text;
+            document.getElementById('results').appendChild(h2);
+        }
+
+        // Test 1: Country Code + Phone Combination
+        addHeader('Test 1: Country Code + Phone Number Combination');
+        const enrichedProfile = { ...mockProfile };
+        if (mockProfile.countryCode && mockProfile.phone) {
+            enrichedProfile.phone = `${mockProfile.countryCode} ${mockProfile.phone}`;
+        }
+        logInfo(`Original phone: ${mockProfile.phone}, Country code: ${mockProfile.countryCode}`);
+        logInfo(`Combined result: ${enrichedProfile.phone}`);
+        const phoneTest = enrichedProfile.phone === '+1 5551234567';
+        logResult('Phone number combines with country code correctly', phoneTest, 
+            `Expected: "+1 5551234567", Got: "${enrichedProfile.phone}"`);
+
+        // Test 2: Full Name Generation
+        addHeader('Test 2: Full Name Auto-Generation');
+        if (mockProfile.firstName && mockProfile.lastName && !mockProfile.fullName) {
+            enrichedProfile.fullName = `${mockProfile.firstName} ${mockProfile.lastName}`;
+        }
+        logInfo(`First name: ${mockProfile.firstName}, Last name: ${mockProfile.lastName}`);
+        const fullNameTest = enrichedProfile.fullName === 'John Doe';
+        logResult('Full name generated correctly', fullNameTest,
+            `Expected: "John Doe", Got: "${enrichedProfile.fullName}"`);
+
+        // Test 3: howDidYouHear field exists in mappings
+        addHeader('Test 3: "How Did You Hear" Field Mapping');
+        const hasMapping = FIELD_MAPPINGS.hasOwnProperty('howDidYouHear');
+        logResult('Field mapping exists for howDidYouHear', hasMapping);
+        
+        if (hasMapping) {
+            logInfo(`Priority keywords: ${FIELD_MAPPINGS.howDidYouHear.priority.join(', ')}`);
+            logInfo(`General keywords: ${FIELD_MAPPINGS.howDidYouHear.keywords.join(', ')}`);
+        }
+
+        // Test 4: Profile has howDidYouHear value
+        addHeader('Test 4: Profile Contains "How Did You Hear" Value');
+        const hasValue = mockProfile.hasOwnProperty('howDidYouHear') && mockProfile.howDidYouHear;
+        logResult('Profile has howDidYouHear field', hasValue,
+            `Value: "${mockProfile.howDidYouHear}"`);
+
+        // Test 5: Field matching simulation
+        addHeader('Test 5: Field Matching Simulation');
+        
+        const testFields = [
+            { name: 'how_did_you_hear', id: 'how_hear', label: 'How did you hear about us?', expected: 'howDidYouHear' },
+            { name: 'referral_source', id: 'referral', label: 'Referral Source', expected: 'howDidYouHear' },
+            { name: 'phone_number', id: 'phone', label: 'Phone Number', expected: 'phone' },
+            { name: 'first_name', id: 'fname', label: 'First Name', expected: 'firstName' },
+        ];
+
+        function calculateFieldScore(field, mapping) {
+            let score = 0;
+            const searchText = [field.name, field.id, field.label].join(' ').toLowerCase();
+
+            mapping.priority.forEach((keyword, index) => {
+                if (searchText.includes(keyword.toLowerCase())) {
+                    score += (mapping.priority.length - index) * 10;
+                }
+            });
+
+            mapping.keywords.forEach(keyword => {
+                if (searchText.includes(keyword.toLowerCase())) {
+                    score += 5;
+                }
+            });
+
+            const exactMatches = [field.name, field.id].filter(attr => 
+                attr && mapping.priority.includes(attr.toLowerCase())
+            );
+            score += exactMatches.length * 15;
+
+            return score;
+        }
+
+        testFields.forEach(testField => {
+            let bestMatch = null;
+            let bestScore = 0;
+
+            Object.keys(FIELD_MAPPINGS).forEach(profileKey => {
+                const score = calculateFieldScore(testField, FIELD_MAPPINGS[profileKey]);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = profileKey;
+                }
+            });
+
+            const isCorrect = bestMatch === testField.expected;
+            logResult(
+                `Field "${testField.label}" matched correctly`,
+                isCorrect,
+                `Expected: ${testField.expected}, Matched: ${bestMatch}, Score: ${bestScore}`
+            );
+        });
+
+        // Test 6: All required fields present
+        addHeader('Test 6: Required Fields Validation');
+        const requiredFields = ['firstName', 'lastName', 'email', 'countryCode', 'phone', 'country', 'state', 'city', 'pincode', 'usWorkEligible', 'sponsorshipRequired'];
+        const missingFields = requiredFields.filter(field => !mockProfile[field]);
+        
+        logResult('All required fields present in profile', missingFields.length === 0,
+            missingFields.length > 0 ? `Missing: ${missingFields.join(', ')}` : 'All fields present');
+
+        // Test 7: Optional fields
+        addHeader('Test 7: Optional Fields');
+        const optionalFields = ['linkedinUrl', 'howDidYouHear'];
+        optionalFields.forEach(field => {
+            const hasField = mockProfile.hasOwnProperty(field);
+            logInfo(`Optional field "${field}": ${hasField ? `✓ Present (${mockProfile[field]})` : '✗ Not present'}`);
+        });
+
+        // Summary
+        addHeader('Test Summary');
+        const allTests = document.querySelectorAll('.test-result.pass, .test-result.fail');
+        const passedTests = document.querySelectorAll('.test-result.pass');
+        logInfo(`Passed: ${passedTests.length} / ${allTests.length} tests`);
+    </script>
+</body>
+</html>

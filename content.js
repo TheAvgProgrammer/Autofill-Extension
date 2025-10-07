@@ -48,6 +48,11 @@
         sponsorshipRequired: {
             priority: ['sponsorship_required', 'visa_sponsorship', 'sponsorship', 'require_sponsorship', 'need_sponsorship', 'visa_support', 'require-sponsorship', 'need-sponsorship'],
             keywords: ['sponsorship', 'sponsor', 'visa', 'require', 'need', 'future', 'employment']
+        },
+        // New field: "How did you hear about us?" / Referral source
+        howDidYouHear: {
+            priority: ['how_did_you_hear', 'howdidyouhear', 'referral_source', 'referral', 'source', 'hear_about', 'heard_about', 'how-did-you-hear'],
+            keywords: ['how', 'hear', 'about', 'referral', 'source', 'found', 'learn']
         }
     };
 
@@ -72,6 +77,13 @@
             const enrichedProfile = { ...profile };
             if (profile.firstName && profile.lastName && !profile.fullName) {
                 enrichedProfile.fullName = `${profile.firstName} ${profile.lastName}`;
+            }
+            
+            // Combine country code and phone number for phone fields
+            // This allows storing country code and phone separately in the profile
+            // but autofilling them as a single combined value (e.g., "+1 5551234567")
+            if (profile.countryCode && profile.phone) {
+                enrichedProfile.phone = `${profile.countryCode} ${profile.phone}`;
             }
 
             console.log(enrichedProfile)
