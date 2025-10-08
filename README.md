@@ -7,6 +7,7 @@ A Chrome extension that automatically fills job application forms with your save
 - **Multi-Profile Support**: Store and manage up to 5 different profiles
 - **Comprehensive Profile Fields**: First Name, Last Name, Full Name, LinkedIn URL, Email Address, Phone Number with Country Code, Country, State, City, Pincode, US Work Authorization, Visa Sponsorship, Referral Source, and Resume File
 - **International Phone Support**: Separate country code and phone number fields that automatically combine during autofill (e.g., "+1 5551234567")
+- **Dial-Code Dropdown Support**: Detects and fills phone country code <select> fields (e.g., "United States (+1)", "+91"), and keeps the phone input local-only when such a dropdown exists.
 - **Referral Source Tracking**: "How did you hear about us?" field with options: LinkedIn, Google, Twitter, Friend, Other
 - **Intelligent Pattern Matching**: Uses regex-based field detection to identify form fields accurately
 - **Full Name Support**: Automatically combines first and last name for "Full Name" fields
@@ -46,6 +47,7 @@ Each profile supports the following fields:
 The extension also automatically fills:
 - **Full Name** - Automatically combines firstName + lastName
 - **Phone Number** - Automatically combines countryCode + phone (e.g., "+1 5551234567")
+- **Country Code Select** - If a separate dial-code dropdown exists, it is selected using normalized matching (supports "+1", "1", and texts like "United States (+1)"). Phone input is filled with the local number only.
 - **First Name Variations** - firstname, first_name, fname, given_name, givenname, forename, first-name
 - **Last Name Variations** - lastname, last_name, lname, surname, family_name, familyname, last-name
 - **Full Name Variations** - fullname, full_name, name, full-name, completename, complete_name
@@ -106,7 +108,7 @@ The extension uses intelligent pattern matching to identify form fields based on
 ### New Features
 
 - **Full Name Handling**: Automatically generates full name from firstName + lastName when a "Full Name" field is detected
-- **International Phone Support**: Combines country code and phone number during autofill (e.g., "+1" + "5551234567" = "+1 5551234567")
+- **International Phone Support**: Combines country code and phone number during autofill (e.g., "+1" + "5551234567" = "+1 5551234567"). When a dial-code dropdown is detected, the dropdown is set and the phone input remains local-only.
 - **Referral Source Tracking**: Supports "How did you hear about us?" fields with options: LinkedIn, Google, Twitter, Friend, Other
 - **Radio Button Support**: Detects and fills radio button inputs for yes/no questions by:
   - Matching radio button values (yes/no)

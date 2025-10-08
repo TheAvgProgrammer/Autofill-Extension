@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const autofillTab = document.getElementById('autofillTab');
     const profileSection = document.getElementById('profileSection');
     const autofillSection = document.getElementById('autofillSection');
+    const tabIndicator = document.querySelector('.tab-indicator');
     const profileSelect = document.getElementById('profileSelect');
     const deleteProfileBtn = document.getElementById('deleteProfileBtn');
     const resumeInput = document.getElementById('resume');
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendProofBtn = document.getElementById('sendProofBtn');
 
     let currentProfileId = '1';
+    let activeTab = 'profile';
     let lastScreenshotDataUrl = null;
 
     function updateSendProofButton(isEnabled) {
@@ -45,6 +47,21 @@ document.addEventListener('DOMContentLoaded', function() {
             autofillSection.classList.add('active'); 
             autofillTab.classList.add('active');
         }
+
+        activeTab = tab;
+        moveTabIndicator();
+        try { chrome.storage.local.set({ activeTab: tab }); } catch (e) {}
+    }
+
+    function moveTabIndicator() {
+        if (!tabIndicator) return;
+        const activeBtn = activeTab === 'profile' ? profileTab : autofillTab;
+        if (!activeBtn) return;
+        const rect = activeBtn.getBoundingClientRect();
+        const parentRect = activeBtn.parentElement.getBoundingClientRect();
+        const x = rect.left - parentRect.left;
+        tabIndicator.style.transform = `translateX(${Math.max(0, x)}px)`;
+        tabIndicator.style.width = `${rect.width}px`;
     }
 
     // Profile selector
@@ -60,7 +77,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Load and save profile
+    // Load and save profile + restore last active tab
+    try {
+        chrome.storage.local.get(['activeTab'], ({ activeTab: savedTab }) => {
+            if (savedTab === 'autofill') { switchTab('autofill'); } else { switchTab('profile'); }
+            requestAnimationFrame(moveTabIndicator);
+        });
+    } catch (e) {
+        switchTab('profile');
+        requestAnimationFrame(moveTabIndicator);
+    }
     loadProfile(currentProfileId);
     profileForm.addEventListener('submit', handleProfileSave);
 
@@ -118,6 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-remove-resume" onclick="removeCurrentResume()">×</button>
             `;
             resumeInput.parentNode.appendChild(resumeDisplay);
+            const removeBtn = resumeDisplay.querySelector('.btn-remove-resume');
+            if (removeBtn) {
+                removeBtn.textContent = '×';
+                removeBtn.setAttribute('aria-label', 'Remove current resume');
+                removeBtn.setAttribute('title', 'Remove');
+            }
         }
     }
 
@@ -391,6 +423,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function showStatus(msg, type='info') {
         statusDiv.textContent = msg;
         statusDiv.className = 'status-message ' + type;
+        statusDiv.classList.add('show');
+        if (type === 'success' || type === 'info') {
+            setTimeout(() => statusDiv.classList.remove('show'), 2600);
+        }
     }
 
     // Initialize profile labels on load
@@ -400,5 +436,18 @@ document.addEventListener('DOMContentLoaded', function() {
             updateProfileLabel(i.toString(), profile);
         });
     }
+
+    // Button ripple interactions
+    document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = ((e.clientX || 0) - rect.left) / rect.width * 100;
+            const y = ((e.clientY || 0) - rect.top) / rect.height * 100;
+            btn.style.setProperty('--rx', x + '%');
+            btn.style.setProperty('--ry', y + '%');
+            btn.classList.add('rippling');
+            setTimeout(() => btn.classList.remove('rippling'), 180);
+        });
+    });
 });
 

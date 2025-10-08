@@ -114,6 +114,13 @@ Tested on:
 4. Click "Autofill Forms"
 5. Verify all fields are filled correctly
 6. Check that phone fields show "+1 5551234567"
+
+7. Dial-code select detection and autofill
+   - Open test-dial-code.html
+   - Verify Form 1: the select labeled "Country Code" auto-selects India (+91) and phone1 is local-only (no "+91")
+   - Verify Form 2: the select with codes-only matches "+91" by digits and phone2 is local-only
+   - Verify Form 3: no dial-code select present, phone3 should be combined as "+91 9876543210"
+   - Regex behavior: options containing patterns like "+91", "India (+91)", and values "91" are matched by normalized digits
 7. Check that "How did you hear about us?" shows "LinkedIn"
 
 ## Regression Testing

@@ -15,6 +15,7 @@
         <div class="tabs">
             <button id="profileTab" class="tab-button active">Profile</button>
             <button id="autofillTab" class="tab-button">Autofill</button>
+            <div class="tab-indicator" aria-hidden="true"></div>
         </div>
 
 
@@ -120,7 +121,7 @@
                     <span class="btn-icon">&#128247;</span>
                     Capture Screenshot
                 </button>
-                <div id="status" class="status-message"></div>
+                <div id="status" class="status-message" role="status" aria-live="polite"></div>
                 <div id="screenshotPreview" class="screenshot-preview hidden" aria-live="polite">
                     <img id="screenshotImage" alt="Captured tab screenshot preview">
                 </div>

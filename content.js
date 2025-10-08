@@ -21,6 +21,16 @@
             priority: ['phone', 'phone_number', 'phonenumber', 'mobile', 'tel', 'telephone'],
             keywords: ['phone', 'mobile', 'tel', 'telephone', 'contact']
         },
+        countryCode: {
+            // Special: phone dialing code select detection
+            specialType: 'dialCode',
+            priority: [
+                'country_code', 'phone_country_code', 'dial_code', 'dialcode', 'countrycode',
+                'calling_code', 'callingcode', 'phone_code', 'isd_code', 'isocode',
+                'country-dial-code', 'phone-country-code', 'country-dialing-code', 'dialing_code'
+            ],
+            keywords: ['country', 'code', 'dial', 'calling', 'prefix', 'isd', 'intl', 'international', '+']
+        },
         linkedinUrl: {
             priority: ['linkedin', 'linkedin_url', 'linkedinurl', 'linkedin_profile'],
             keywords: ['linkedin', 'profile', 'social']
@@ -51,8 +61,10 @@
         },
         // New field: "How did you hear about us?" / Referral source
         howDidYouHear: {
+            specialType: 'referral',
             priority: ['how_did_you_hear', 'howdidyouhear', 'referral_source', 'referral', 'source', 'hear_about', 'heard_about', 'how-did-you-hear'],
-            keywords: ['how', 'hear', 'about', 'referral', 'source', 'found', 'learn']
+            // Be specific to avoid matching generic questions starting with "How"
+            keywords: ['hear', 'referral', 'source', 'about', 'learn']
         }
     };
 
@@ -78,22 +90,42 @@
             if (profile.firstName && profile.lastName && !profile.fullName) {
                 enrichedProfile.fullName = `${profile.firstName} ${profile.lastName}`;
             }
-            
-            // Combine country code and phone number for phone fields
-            // This allows storing country code and phone separately in the profile
-            // but autofilling them as a single combined value (e.g., "+1 5551234567")
-            if (profile.countryCode && profile.phone) {
-                enrichedProfile.phone = `${profile.countryCode} ${profile.phone}`;
-            }
 
-            console.log(enrichedProfile)
+            // Detect if there's a separate dial-code select present
+            // const countryCodeMatches = findMatchingFields(formFields, 'countryCode');
+            // const hasDialCodeSelect = countryCodeMatches.some(m => m.element && m.element.tagName && m.element.tagName.toLowerCase() === 'select');
 
-            // Process each profile field
-            Object.keys(enrichedProfile).forEach(profileKey => {
-                if (enrichedProfile[profileKey] && enrichedProfile[profileKey].trim()) {
+            // // Combine country code with phone ONLY if there is no separate dial-code select
+            // if (profile.countryCode && profile.phone) {
+            //     if (!hasDialCodeSelect) {
+            //         enrichedProfile.phone = `${profile.countryCode} ${profile.phone}`;
+            //     } else {
+            //         // Ensure phone remains local number if a dial-code select exists
+            //         enrichedProfile.phone = `${profile.phone}`;
+            //     }
+            // }
+
+            // console.log(enrichedProfile)
+
+            // Process each profile field (ensure phone first, then countryCode) to avoid dial code overwriting phone
+            const profileKeys = Object.keys(enrichedProfile);
+            const orderedKeys = [];
+            if (profileKeys.includes('phone')) orderedKeys.push('phone');
+            if (profileKeys.includes('countryCode')) orderedKeys.push('countryCode');
+            profileKeys.forEach(k => { if (!orderedKeys.includes(k)) orderedKeys.push(k); });
+
+            orderedKeys.forEach(profileKey => {
+                const rawVal = enrichedProfile[profileKey];
+                const value = typeof rawVal === 'string' ? rawVal.trim() : rawVal;
+                if (value) {
                     const matchedFields = findMatchingFields(formFields, profileKey);
-                    // console.log("Matched fields: ", matchedFields, " for profile key: ", profileKey, " with value: ", enrichedProfile[profileKey]);
-                    fillField(matchedFields[0], enrichedProfile[profileKey])
+                    if (matchedFields && matchedFields.length > 0) {
+                        // Try filling the top match first; if it succeeds, count it
+                        const filled = fillField(matchedFields[0], String(value));
+                        if (filled) {
+                            fieldsFound += 1;
+                        }
+                    }
                 }
             });
 
@@ -274,6 +306,30 @@
 
     function calculateFieldScore(field, mapping) {
         let score = 0;
+        // Restrict dial-code mapping to selects only to avoid filling phone inputs with country codes
+        if (mapping && mapping.specialType === 'dialCode' && field.tagName !== 'select') {
+            return 0;
+        }
+        // Additional constraints for referral mapping (howDidYouHear)
+        if (mapping && mapping.specialType === 'referral') {
+            const sText = [
+                field.name,
+                field.id,
+                field.placeholder,
+                field.label,
+                field.ariaLabel
+            ].join(' ').toLowerCase();
+
+            // Must include one of these to qualify
+            const mustHave = /(hear|referral|source|about)/;
+            if (!mustHave.test(sText)) {
+                return 0;
+            }
+            // Exclude obvious experience/tenure questions
+            if (/(years?|experience|exp|months?)/.test(sText)) {
+                return 0;
+            }
+        }
         const searchText = [
             field.name,
             field.id,
@@ -296,11 +352,56 @@
             }
         });
 
+        console.log('Score for field:', field, 'is', score);
+
         // Bonus for exact matches
         const exactMatches = [field.name, field.id].filter(attr => 
             attr && mapping.priority.includes(attr.toLowerCase())
         );
         score += exactMatches.length * 15;
+
+        // Heuristic: if mapping is for dial-code and this select's options look like dialing codes, boost score
+        try {
+            if (mapping.specialType === 'dialCode' && field.tagName === 'select' && field.element && field.element.options) {
+                const options = Array.from(field.element.options);
+                let dialLikeCount = 0;
+                for (const opt of options) {
+                    const txt = (opt.text || '').toLowerCase();
+                    const val = (opt.value || '').toLowerCase();
+                    // Common patterns: "+1", "(+1)", "United States (+1)", value "1" or "+1"
+                    const hasPlusDigits = /\+\s*\d{1,4}/.test(txt) || /\(\s*\+\s*\d{1,4}\s*\)/.test(txt) || /^\+?\d{1,4}$/.test(val);
+                    const hasCountryAndDigits = /[a-z]/.test(txt) && /\d{1,4}/.test(txt);
+                    if (hasPlusDigits || hasCountryAndDigits) {
+                        dialLikeCount++;
+                    }
+                }
+                if (dialLikeCount >= 3) {
+                    // Strong indication this is a dial-code select
+                    score += 60 + Math.min(40, dialLikeCount);
+                }
+            }
+            if (mapping.specialType === 'referral' && field.tagName === 'select' && field.element && field.element.options) {
+                const options = Array.from(field.element.options);
+                let referralLike = 0;
+                let numericLike = 0;
+                for (const opt of options) {
+                    const txt = (opt.text || '').toLowerCase();
+                    if (/^\s*\d+\s*$/.test(txt)) numericLike++;
+                    if (/(linkedin|google|indeed|glassdoor|twitter|friend|referral|job\s*board|company\s*site|website|career\s*page|facebook|instagram|other)/.test(txt)) {
+                        referralLike++;
+                    }
+                }
+                // If numeric dominates, it's not a referral select
+                if (numericLike >= Math.max(3, referralLike + 1)) {
+                    return 0;
+                }
+                if (referralLike >= 2) {
+                    score += 40;
+                }
+            }
+        } catch (e) {
+            // ignore heuristic errors
+        }
 
         if (score > 0) {
             // console.log('Field matched:', field, 'Score:', score);
@@ -309,13 +410,26 @@
         return score;
     }
 
+    function isLikelyDialCode(val) {
+        if (!val) return false;
+        const s = String(val).trim();
+        // "+1", "1", "+91", "91" etc.
+        return /^\+?\d{1,4}$/.test(s);
+    }
+
     function fillField(fieldInfo, value) {
         try {
+            if (!fieldInfo || !fieldInfo.element) {
+                return false;
+            }
             const element = fieldInfo.element;
             
             // Skip if field already has content (unless it's placeholder text)
             if (element.value && element.value !== element.placeholder && element.type !== 'radio') {
-                return false;
+                // Allow overriding a stray dial-code in tel input with full phone value
+                if (!(element.type === 'tel' && isLikelyDialCode(element.value) && String(value).length > String(element.value).length)) {
+                    return false;
+                }
             }
 
             // Handle different field types
@@ -369,6 +483,18 @@
                 option.text.toLowerCase().includes(value.toLowerCase()) ||
                 value.toLowerCase().includes(option.text.toLowerCase())
             );
+        }
+
+        // Dial-code normalization: match by digits (e.g., value "+1" to option text "United States (+1)" or value "1")
+        if (!matchingOption) {
+            const inputDigits = (value || '').replace(/\D/g, '');
+            if (inputDigits) {
+                matchingOption = options.find(option => {
+                    const textDigits = (option.text || '').replace(/\D/g, '');
+                    const valueDigits = (option.value || '').replace(/\D/g, '');
+                    return inputDigits && (textDigits === inputDigits || valueDigits === inputDigits);
+                });
+            }
         }
 
         if (matchingOption) {

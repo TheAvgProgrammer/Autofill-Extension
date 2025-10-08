@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dial Code Select Autofill Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; padding: 20px; }
+    .form { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px; margin-bottom: 24px; }
+    .row { display: flex; gap: 12px; }
+    .field { flex: 1; margin-bottom: 12px; }
+    label { display: block; font-weight: bold; margin-bottom: 6px; }
+    select, input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .test-result { padding: 10px; margin: 8px 0; border-radius: 4px; }
+    .pass { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+    .fail { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    h2 { margin-top: 24px; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+  </style>
+  </head>
+<body>
+  <h1>Dial Code Select Autofill Tests</h1>
+
+  <div class="form" id="form1">
+    <h2>Form 1: Typical dial-code select with country names and codes</h2>
+    <div class="row">
+      <div class="field">
+        <label for="dial_code_1">Country Code</label>
+        <select id="dial_code_1" name="phone_country_code">
+          <option value="">Please select</option>
+          <option value="1">United States (+1)</option>
+          <option value="91">India (+91)</option>
+          <option value="44">United Kingdom (+44)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="phone1">Phone Number</label>
+        <input type="tel" id="phone1" name="phone" />
+      </div>
+    </div>
+  </div>
+
+  <div class="form" id="form2">
+    <h2>Form 2: Dial-code select with codes only</h2>
+    <div class="row">
+      <div class="field">
+        <label for="dial_code_2">Country</label>
+        <select id="dial_code_2" name="country">
+          <option value="">Select</option>
+          <option value="+1">+1</option>
+          <option value="+44">+44</option>
+          <option value="+91">+91</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="phone2">Phone</label>
+        <input type="tel" id="phone2" name="tel" />
+      </div>
+    </div>
+  </div>
+
+  <div class="form" id="form3">
+    <h2>Form 3: No dial-code select (combine phone + code)</h2>
+    <div class="row">
+      <div class="field">
+        <label for="phone3">Phone</label>
+        <input type="tel" id="phone3" name="phone_number" />
+      </div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    // Minimal mapping mirroring content.js for relevant fields
+    const FIELD_MAPPINGS = {
+      phone: {
+        priority: ['phone', 'phone_number', 'phonenumber', 'mobile', 'tel', 'telephone'],
+        keywords: ['phone', 'mobile', 'tel', 'telephone', 'contact']
+      },
+      countryCode: {
+        specialType: 'dialCode',
+        priority: [
+          'country_code', 'phone_country_code', 'dial_code', 'dialcode', 'countrycode',
+          'calling_code', 'callingcode', 'phone_code', 'isd_code', 'isocode',
+          'country-dial-code', 'phone-country-code', 'country-dialing-code', 'dialing_code'
+        ],
+        keywords: ['country', 'code', 'dial', 'calling', 'prefix', 'isd', 'intl', 'international', 'phone', 'mobile']
+      }
+    };
+
+    const profile = {
+      countryCode: '+91',
+      phone: '9876543210',
+      country: 'India'
+    };
+
+    function elInfo(el){
+      return {
+        element: el,
+        name: el.name || '',
+        id: el.id || '',
+        placeholder: el.placeholder || '',
+        type: el.type || 'text',
+        tagName: el.tagName.toLowerCase(),
+        label: findLabel(el),
+        ariaLabel: el.getAttribute('aria-label') || ''
+      };
+    }
+
+    function findLabel(element){
+      let label = '';
+      if (element.id) {
+        const lbl = document.querySelector(`label[for="${element.id}"]`);
+        if (lbl) label = lbl.textContent.trim();
+      }
+      if (!label) {
+        const wrap = element.closest('label');
+        if (wrap) label = wrap.textContent.replace(element.value || '', '').trim();
+      }
+      if (!label) {
+        const p = element.parentElement;
+        if (p) {
+          let sib = element.previousElementSibling;
+          while (sib && !label){
+            if (sib.tagName && ['LABEL','SPAN','DIV','P'].includes(sib.tagName)){
+              const t = sib.textContent.trim();
+              if (t && t.length < 100){ label = t; break; }
+            }
+            sib = sib.previousElementSibling;
+          }
+          if (!label){
+            const txt = p.textContent.replace(element.value || '', '').trim();
+            if (txt && txt.length < 100) label = txt;
+          }
+        }
+      }
+      return label.replace(/[:\*]/g, '').trim();
+    }
+
+    function findFormFields(){
+      const sels = [
+        'input[type="text"]','input[type="email"]','input[type="tel"]','input[type="url"]',
+        'input[type="radio"]','input:not([type])','textarea','select'
+      ];
+      const out=[];
+      sels.forEach(sel=>{
+        document.querySelectorAll(sel).forEach(el=>{
+          if (el.type==='hidden'||el.readOnly||el.disabled) return;
+          out.push(elInfo(el));
+        })
+      })
+      return out;
+    }
+
+    function calculateFieldScore(field, mapping){
+      let score = 0;
+      const search = [field.name, field.id, field.placeholder, field.label, field.ariaLabel].join(' ').toLowerCase();
+      mapping.priority.forEach((kw,i)=>{ if (search.includes(kw.toLowerCase())) score += (mapping.priority.length-i)*10; });
+      mapping.keywords.forEach(kw=>{ if (search.includes(kw.toLowerCase())) score += 5; });
+      const exact = [field.name, field.id].filter(a=> a && mapping.priority.includes(a.toLowerCase()));
+      score += exact.length * 15;
+      try{
+        if (mapping.specialType==='dialCode' && field.tagName==='select' && field.element && field.element.options){
+          const options = Array.from(field.element.options);
+          let dialLike=0;
+          for (const opt of options){
+            const txt=(opt.text||'').toLowerCase();
+            const val=(opt.value||'').toLowerCase();
+            const hasPlusDigits = /\+\s*\d{1,4}/.test(txt) || /\(\s*\+\s*\d{1,4}\s*\)/.test(txt) || /^\+?\d{1,4}$/.test(val);
+            const hasCountryAndDigits = /[a-z]/.test(txt) && /\d{1,4}/.test(txt);
+            if (hasPlusDigits || hasCountryAndDigits) dialLike++;
+          }
+          if (dialLike>=3) score += 60 + Math.min(40, dialLike);
+        }
+      }catch(e){}
+      return score;
+    }
+
+    function findMatchingFields(formFields, key){
+      const mapping = FIELD_MAPPINGS[key];
+      if (!mapping) return [];
+      const scored=[];
+      formFields.forEach(f=>{
+        const s = calculateFieldScore(f, mapping);
+        if (s>0) scored.push({field:f,score:s});
+      });
+      scored.sort((a,b)=>b.score-a.score);
+      const used=new Set(), out=[];
+      scored.forEach(({field})=>{ if(!used.has(field.element) && out.length<3){ out.push(field); used.add(field.element);} });
+      return out;
+    }
+
+    function fillSelectField(element, value){
+      const options = Array.from(element.options);
+      let match = options.find(o=> (o.value||'').toLowerCase() === (value||'').toLowerCase() || (o.text||'').toLowerCase() === (value||'').toLowerCase());
+      if (!match){
+        match = options.find(o=> (o.text||'').toLowerCase().includes((value||'').toLowerCase()) || (value||'').toLowerCase().includes((o.text||'').toLowerCase()));
+      }
+      if (!match){
+        const inputDigits = (value||'').replace(/\D/g,'');
+        if (inputDigits){
+          match = options.find(o=> ((o.text||'').replace(/\D/g,'')===inputDigits) || ((o.value||'').replace(/\D/g,'')===inputDigits));
+        }
+      }
+      if (match){ element.value = match.value; element.dispatchEvent(new Event('change',{bubbles:true})); return true; }
+      return false;
+    }
+
+    function log(msg, ok=true, details=''){
+      const d=document.createElement('div'); d.className='test-result ' + (ok?'pass':'fail');
+      d.innerHTML = `<strong>${ok?'\u2705':'\u274C'} ${msg}</strong>` + (details?`<br><code>${details}</code>`:'');
+      document.getElementById('results').appendChild(d);
+    }
+    function info(msg){
+      const d=document.createElement('div'); d.className='test-result info'; d.innerHTML = `<strong>\u2139\uFE0F ${msg}</strong>`; document.getElementById('results').appendChild(d);
+    }
+
+    // Run tests
+    (function run(){
+      info('Profile: countryCode='+profile.countryCode+', phone='+profile.phone+', country='+profile.country);
+
+      // Build field list and detect dial-code select
+      const fields = findFormFields();
+      const ccMatches = findMatchingFields(fields, 'countryCode');
+      const hasDial = ccMatches.some(m=> m.element && m.element.tagName && m.element.tagName.toLowerCase()==='select');
+      info('Dial code select detected: ' + hasDial);
+
+      // Fill country code matches
+      let filledAny=false;
+      ccMatches.forEach(m=>{ if (m.tagName==='select') { filledAny = fillSelectField(m.element, profile.countryCode) || filledAny; }});
+
+      // Validate Form 1
+      const f1Selected = document.getElementById('dial_code_1').value;
+      log('Form1: dial_code_1 matched to India (+91)', f1Selected==='91', 'value='+f1Selected+' expected=91');
+      // Ensure phone1 should be local only
+      const phone1 = document.getElementById('phone1');
+      phone1.value = hasDial ? profile.phone : (profile.countryCode + ' ' + profile.phone);
+      log('Form1: phone1 local only when dial select present', phone1.value === profile.phone, 'value='+phone1.value+' expected='+profile.phone);
+
+      // Validate Form 2 (codes only)
+      const f2 = document.getElementById('dial_code_2');
+      const ok2 = fillSelectField(f2, profile.countryCode);
+      log('Form2: dial_code_2 matched by digits', ok2 && f2.value === '+91', 'value='+f2.value+' expected=+91');
+      const phone2 = document.getElementById('phone2');
+      phone2.value = profile.phone;
+      log('Form2: phone2 local only', phone2.value === profile.phone);
+
+      // Validate Form 3 (no dial select)
+      const phone3 = document.getElementById('phone3');
+      phone3.value = profile.countryCode + ' ' + profile.phone;
+      log('Form3: phone3 combined when no dial select', phone3.value === (profile.countryCode + ' ' + profile.phone));
+
+      // Summary
+      const all = document.querySelectorAll('.test-result.pass, .test-result.fail');
+      const passed = document.querySelectorAll('.test-result.pass');
+      info(`Passed ${passed.length} / ${all.length} checks`);
+    })();
+  </script>
+</body>
+</html>
