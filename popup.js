@@ -35,17 +35,39 @@ document.addEventListener('DOMContentLoaded', function() {
     profileTab.addEventListener('click', () => switchTab('profile'));
     autofillTab.addEventListener('click', () => switchTab('autofill'));
 
+    // Keyboard navigation for tabs
+    [profileTab, autofillTab].forEach(tab => {
+        tab.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const nextTab = tab === profileTab ? autofillTab : profileTab;
+                nextTab.focus();
+                nextTab.click();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prevTab = tab === autofillTab ? profileTab : autofillTab;
+                prevTab.focus();
+                prevTab.click();
+            }
+        });
+    });
+
     function switchTab(tab) {
         [profileSection, autofillSection].forEach(s => s.classList.remove('active'));
-        [profileTab, autofillTab].forEach(b => b.classList.remove('active'));
+        [profileTab, autofillTab].forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
         
         if (tab === 'profile') {
             profileSection.classList.add('active'); 
             profileTab.classList.add('active');
+            profileTab.setAttribute('aria-selected', 'true');
         }
         if (tab === 'autofill') {
             autofillSection.classList.add('active'); 
             autofillTab.classList.add('active');
+            autofillTab.setAttribute('aria-selected', 'true');
         }
 
         activeTab = tab;
@@ -186,16 +208,61 @@ document.addEventListener('DOMContentLoaded', function() {
         const requiredFields = ['firstName', 'lastName', 'email', 'countryCode', 'phone', 'country', 'state', 'city', 'pincode', 'usWorkEligible', 'sponsorshipRequired'];
         const missingFields = requiredFields.filter(field => !profile[field]);
 
+        // Clear previous error states
+        document.querySelectorAll('.form-group.error').forEach(group => {
+            group.classList.remove('error');
+            const errorMsg = group.querySelector('.error-message');
+            if (errorMsg) errorMsg.remove();
+        });
+
         if (missingFields.length > 0) {
-            showStatus('Please fill in all required fields: ' + missingFields.join(', '), 'error');
+            missingFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (element) {
+                    const formGroup = element.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.classList.add('error');
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'error-message';
+                        errorMsg.textContent = 'This field is required';
+                        formGroup.appendChild(errorMsg);
+                    }
+                }
+            });
+            
+            // Scroll to first error
+            const firstError = document.querySelector('.form-group.error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            showStatus('Please fill in all required fields', 'error');
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(profile.email)) {
+            const emailGroup = document.getElementById('email').closest('.form-group');
+            if (emailGroup) {
+                emailGroup.classList.add('error');
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-message';
+                errorMsg.textContent = 'Please enter a valid email address';
+                emailGroup.appendChild(errorMsg);
+                emailGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             showStatus('Please enter a valid email address', 'error');
             return;
         }
+
+        // Add success states to all fields
+        document.querySelectorAll('.form-group').forEach(group => {
+            const input = group.querySelector('input, select, textarea');
+            if (input && input.value) {
+                group.classList.add('success');
+                setTimeout(() => group.classList.remove('success'), 2000);
+            }
+        });
 
         const file = resumeInput.files[0];
         const successMessage = file ? 'Profile and resume saved!' : 'Profile saved successfully!';
@@ -211,9 +278,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 showStatus(successMessage, 'success');
                 updateProfileLabel(currentProfileId, profile);
 
+                // Show success animation
+                showSuccessOverlay();
+
                 setTimeout(() => {
                     switchTab('autofill');
-                }, 1500);
+                }, 1800);
             });
         };
 
@@ -392,7 +462,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             autofillBtn.disabled = true;
             autofillBtn.classList.add('loading');
-            showStatus('Filling forms with regex matching...', 'info');
+            
+            // Show progress
+            showProgressBar();
+            showStatus('Analyzing page and filling forms...', 'info');
             
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0]) {
@@ -403,6 +476,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, (response) => {
                         autofillBtn.disabled = false;
                         autofillBtn.classList.remove('loading');
+                        hideProgressBar();
                         
                         if (chrome.runtime.lastError) {
                             showStatus('Error: Could not access page. Try refreshing the page.', 'error');
@@ -411,6 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         if (response && response.success) {
                             showStatus(`Successfully filled ${response.fieldsFound} out of ${response.totalFields} fields!`, 'success');
+                            showSuccessOverlay();
                         } else {
                             showStatus('Autofill failed: ' + (response?.error || 'Unknown error'), 'error');
                         }
@@ -424,8 +499,19 @@ document.addEventListener('DOMContentLoaded', function() {
         statusDiv.textContent = msg;
         statusDiv.className = 'status-message ' + type;
         statusDiv.classList.add('show');
+        
+        // Auto-hide success and info messages
         if (type === 'success' || type === 'info') {
-            setTimeout(() => statusDiv.classList.remove('show'), 2600);
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 3500);
+        }
+        
+        // Keep error messages visible longer
+        if (type === 'error') {
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 5000);
         }
     }
 
@@ -446,8 +532,137 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.style.setProperty('--rx', x + '%');
             btn.style.setProperty('--ry', y + '%');
             btn.classList.add('rippling');
-            setTimeout(() => btn.classList.remove('rippling'), 180);
+            setTimeout(() => btn.classList.remove('rippling'), 600);
         });
     });
+
+    // Add input validation feedback
+    document.querySelectorAll('.form-group input, .form-group select, .form-group textarea').forEach(input => {
+        input.addEventListener('blur', (e) => {
+            const formGroup = e.target.closest('.form-group');
+            if (!formGroup) return;
+            
+            formGroup.classList.remove('error', 'success');
+            const errorMsg = formGroup.querySelector('.error-message');
+            if (errorMsg) errorMsg.remove();
+            
+            if (e.target.hasAttribute('required') && !e.target.value.trim()) {
+                formGroup.classList.add('error');
+                const msg = document.createElement('div');
+                msg.className = 'error-message';
+                msg.textContent = 'This field is required';
+                formGroup.appendChild(msg);
+            } else if (e.target.type === 'email' && e.target.value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(e.target.value)) {
+                    formGroup.classList.add('error');
+                    const msg = document.createElement('div');
+                    msg.className = 'error-message';
+                    msg.textContent = 'Please enter a valid email';
+                    formGroup.appendChild(msg);
+                } else {
+                    formGroup.classList.add('success');
+                }
+            } else if (e.target.value.trim()) {
+                formGroup.classList.add('success');
+            }
+        });
+        
+        // Clear error on input
+        input.addEventListener('input', (e) => {
+            const formGroup = e.target.closest('.form-group');
+            if (formGroup && formGroup.classList.contains('error')) {
+                formGroup.classList.remove('error');
+                const errorMsg = formGroup.querySelector('.error-message');
+                if (errorMsg) errorMsg.remove();
+            }
+        });
+    });
+
+    // Helper functions
+    function showProgressBar() {
+        let progressContainer = document.getElementById('autofillProgress');
+        if (!progressContainer) {
+            progressContainer = document.createElement('div');
+            progressContainer.id = 'autofillProgress';
+            progressContainer.className = 'progress-bar';
+            progressContainer.innerHTML = '<div class="progress-fill" style="width: 0%"></div>';
+            statusDiv.parentNode.insertBefore(progressContainer, statusDiv.nextSibling);
+        }
+        
+        const fill = progressContainer.querySelector('.progress-fill');
+        let width = 0;
+        const interval = setInterval(() => {
+            if (width >= 90) {
+                clearInterval(interval);
+            } else {
+                width += Math.random() * 15;
+                if (width > 90) width = 90;
+                fill.style.width = width + '%';
+            }
+        }, 200);
+        
+        progressContainer.dataset.interval = interval;
+    }
+
+    function hideProgressBar() {
+        const progressContainer = document.getElementById('autofillProgress');
+        if (progressContainer) {
+            const interval = progressContainer.dataset.interval;
+            if (interval) clearInterval(parseInt(interval));
+            
+            const fill = progressContainer.querySelector('.progress-fill');
+            fill.style.width = '100%';
+            
+            setTimeout(() => {
+                progressContainer.style.opacity = '0';
+                setTimeout(() => progressContainer.remove(), 300);
+            }, 500);
+        }
+    }
+
+    function showSuccessOverlay() {
+        let overlay = document.getElementById('successOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'successOverlay';
+            overlay.className = 'success-overlay';
+            overlay.innerHTML = '<div class="success-icon">✓</div>';
+            document.body.appendChild(overlay);
+        }
+        
+        setTimeout(() => overlay.classList.add('show'), 10);
+        setTimeout(() => {
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.remove(), 500);
+        }, 1500);
+    }
+
+    // Add tooltips to buttons
+    function addTooltip(element, text) {
+        element.addEventListener('mouseenter', (e) => {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = text;
+            document.body.appendChild(tooltip);
+            
+            const rect = element.getBoundingClientRect();
+            tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+            tooltip.style.top = (rect.top - tooltip.offsetHeight - 8) + 'px';
+            
+            setTimeout(() => tooltip.classList.add('show'), 10);
+            
+            element.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('show');
+                setTimeout(() => tooltip.remove(), 300);
+            }, { once: true });
+        });
+    }
+
+    // Add tooltips to various elements
+    if (autofillBtn) addTooltip(autofillBtn, 'Fill forms with your saved profile');
+    if (screenshotBtn) addTooltip(screenshotBtn, 'Capture current page screenshot');
+    if (sendProofBtn) addTooltip(sendProofBtn, 'Send screenshot as proof of application');
+    if (deleteProfileBtn) addTooltip(deleteProfileBtn, 'Delete this profile permanently');
 });
 
