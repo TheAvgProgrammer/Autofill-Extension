@@ -511,13 +511,35 @@ body {
 
 .autofill-content {
     text-align: center;
+    animation: fadeSlideIn var(--t-slower) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .info-text {
-    color: #6c757d;
-    margin-bottom: 20px;
+    color: var(--muted);
+    margin-bottom: 24px;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.info-text::before {
+    content: 'ℹ️';
+    position: absolute;
+    top: 16px;
+    left: -30px;
+    font-size: 40px;
+    opacity: 0.1;
+    animation: infoIconFloat 3s ease-in-out infinite;
+}
+
+@keyframes infoIconFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(5deg); }
 }
 
 .status-message {
@@ -669,20 +691,26 @@ body {
 
 /* Scrollbar styling */
 .container::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .container::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 0 var(--radius) var(--radius) 0;
 }
 
 .container::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
+    background: linear-gradient(180deg, var(--primary-light) 0%, var(--primary) 100%);
+    border-radius: 10px;
+    transition: background var(--t-med) ease;
 }
 
 .container::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.container::-webkit-scrollbar-thumb:active {
+    background: var(--primary-dark);
 }
 
 /* Loading state */
@@ -746,41 +774,54 @@ body {
 
 /* Current resume display */
 .current-resume {
-    margin-top: 8px;
-    padding: 8px 12px;
-    background-color: #e7f3ff;
-    border: 1px solid #b8daff;
-    border-radius: 4px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 2px solid #93c5fd;
+    border-radius: var(--radius-xs);
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 13px;
+    animation: slideDown 0.3s ease;
+    box-shadow: var(--shadow-xs);
 }
 
 .current-resume-text {
-    color: #004085;
-    font-weight: 500;
+    color: #1e40af;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.current-resume-text::before {
+    content: '📄';
+    font-size: 16px;
 }
 
 .btn-remove-resume {
-    background: none;
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
     border: none;
-    color: #721c24;
-    font-size: 16px;
+    color: white;
+    font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     padding: 0;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: background-color 0.2s ease;
+    transition: all var(--t-med) ease;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
 }
 
 .btn-remove-resume:hover {
-    background-color: rgba(220, 53, 69, 0.1);
+    background: linear-gradient(135deg, var(--danger-dark) 0%, #b91c1c 100%);
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .screenshot-preview {
@@ -956,6 +997,78 @@ body {
     0% { transform: scale(1); }
     50% { transform: scale(0.96); }
     100% { transform: scale(1); }
+}
+
+/* Form field animations */
+.form-group input::placeholder,
+.form-group textarea::placeholder,
+.form-group select::placeholder {
+    color: var(--muted);
+    opacity: 0.6;
+    transition: opacity var(--t-med) ease;
+}
+
+.form-group input:focus::placeholder,
+.form-group textarea:focus::placeholder,
+.form-group select:focus::placeholder {
+    opacity: 0.4;
+}
+
+/* Staggered animation for form groups */
+.section.active .form-group {
+    animation: fadeSlideIn var(--t-slow) cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.section.active .form-group:nth-child(1) { animation-delay: 0.05s; }
+.section.active .form-group:nth-child(2) { animation-delay: 0.1s; }
+.section.active .form-group:nth-child(3) { animation-delay: 0.15s; }
+.section.active .form-group:nth-child(4) { animation-delay: 0.2s; }
+.section.active .form-group:nth-child(5) { animation-delay: 0.25s; }
+.section.active .form-group:nth-child(6) { animation-delay: 0.3s; }
+.section.active .form-group:nth-child(7) { animation-delay: 0.35s; }
+.section.active .form-group:nth-child(8) { animation-delay: 0.4s; }
+.section.active .form-group:nth-child(9) { animation-delay: 0.45s; }
+.section.active .form-group:nth-child(10) { animation-delay: 0.5s; }
+
+/* Button glow effect on hover */
+.btn-autofill::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--success), var(--secondary));
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    filter: blur(8px);
+    transition: opacity var(--t-med) ease;
+}
+
+.btn-autofill:hover::after {
+    opacity: 0.6;
+}
+
+/* Enhanced hover states for all interactive elements */
+button, select, input[type="file"] {
+    cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-xs);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all var(--t-med) ease;
+    margin-right: 12px;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-xs);
 }
 
 /* Animations */

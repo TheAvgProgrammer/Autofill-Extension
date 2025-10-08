@@ -35,17 +35,39 @@ document.addEventListener('DOMContentLoaded', function() {
     profileTab.addEventListener('click', () => switchTab('profile'));
     autofillTab.addEventListener('click', () => switchTab('autofill'));
 
+    // Keyboard navigation for tabs
+    [profileTab, autofillTab].forEach(tab => {
+        tab.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const nextTab = tab === profileTab ? autofillTab : profileTab;
+                nextTab.focus();
+                nextTab.click();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prevTab = tab === autofillTab ? profileTab : autofillTab;
+                prevTab.focus();
+                prevTab.click();
+            }
+        });
+    });
+
     function switchTab(tab) {
         [profileSection, autofillSection].forEach(s => s.classList.remove('active'));
-        [profileTab, autofillTab].forEach(b => b.classList.remove('active'));
+        [profileTab, autofillTab].forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
         
         if (tab === 'profile') {
             profileSection.classList.add('active'); 
             profileTab.classList.add('active');
+            profileTab.setAttribute('aria-selected', 'true');
         }
         if (tab === 'autofill') {
             autofillSection.classList.add('active'); 
             autofillTab.classList.add('active');
+            autofillTab.setAttribute('aria-selected', 'true');
         }
 
         activeTab = tab;

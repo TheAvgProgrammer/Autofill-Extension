@@ -15,15 +15,15 @@
             </h1>
         </div>
         
-        <div class="tabs">
-            <button id="profileTab" class="tab-button active">Profile</button>
-            <button id="autofillTab" class="tab-button">Autofill</button>
+        <div class="tabs" role="tablist" aria-label="Profile sections">
+            <button id="profileTab" class="tab-button active" role="tab" aria-selected="true" aria-controls="profileSection">Profile</button>
+            <button id="autofillTab" class="tab-button" role="tab" aria-selected="false" aria-controls="autofillSection">Autofill</button>
             <div class="tab-indicator" aria-hidden="true"></div>
         </div>
 
 
 
-        <div id="profileSection" class="section active">
+        <div id="profileSection" class="section active" role="tabpanel" aria-labelledby="profileTab">
             <div class="profile-selector">
                 <label for="profileSelect">Select Profile:</label>
                 <select id="profileSelect" name="profileSelect">
@@ -113,7 +113,7 @@
             </form>
         </div>
 
-        <div id="autofillSection" class="section">
+        <div id="autofillSection" class="section" role="tabpanel" aria-labelledby="autofillTab">
             <div class="autofill-content">
                 <p class="info-text">Click the button below to automatically fill job application forms on this page with your saved profile data.</p>
                 <button id="autofillBtn" class="btn btn-autofill">
