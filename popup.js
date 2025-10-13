@@ -1,4 +1,4 @@
-const SUPABASE_WORK_PROOF_URL = 'http://localhost:3000/api/v1/upload';
+const SUPABASE_WORK_PROOF_URL = 'https://autofill-backend.vercel.app/api/v1/upload';
 const SUPABASE_ANON_KEY = 'SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kc3FtdXZnbm9seW1ydWdwcmZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MTIyMjcsImV4cCI6MjA3MDQ4ODIyN30.6eS8BFIJmTqZ_2v8oLsE9tvEUvBEBJ4zIeAVVLbcwF8'
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
             profileTab.classList.add('active');
             profileTab.setAttribute('aria-selected', 'true');
         }
-        if (tab === 'autofill') {
+        if (tab === 'autofill') { 
             autofillSection.classList.add('active'); 
             autofillTab.classList.add('active');
             autofillTab.setAttribute('aria-selected', 'true');
