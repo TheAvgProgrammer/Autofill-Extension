@@ -65,6 +65,18 @@
             priority: ['how_did_you_hear', 'howdidyouhear', 'referral_source', 'referral', 'source', 'hear_about', 'heard_about', 'how-did-you-hear'],
             // Be specific to avoid matching generic questions starting with "How"
             keywords: ['hear', 'referral', 'source', 'about', 'learn']
+        },
+        workedBefore: {
+            priority: ['worked_before', 'workedbefore', 'previous_employment', 'prior_employment', 'worked_here', 'employed_before', 'previously_employed', 'worked-before', 'ever-worked'],
+            keywords: ['worked', 'before', 'previous', 'prior', 'employed', 'company', 'organization', 'ever']
+        },
+        race: {
+            priority: ['race', 'ethnicity', 'ethnic_origin', 'racial_identity', 'ethnic_background', 'ethnicity_race'],
+            keywords: ['race', 'ethnicity', 'ethnic', 'racial', 'hispanic', 'latino']
+        },
+        gender: {
+            priority: ['gender', 'sex', 'gender_identity'],
+            keywords: ['gender', 'sex', 'male', 'female']
         }
     };
 
@@ -471,17 +483,39 @@
         // For select fields, try to find a matching option
         const options = Array.from(element.options);
         
-        // Try exact match first
-        let matchingOption = options.find(option => 
-            option.value.toLowerCase() === value.toLowerCase() ||
-            option.text.toLowerCase() === value.toLowerCase()
+        // Skip empty/placeholder options
+        const validOptions = options.filter(opt => 
+            opt.value && opt.value.trim() !== '' && 
+            opt.text && opt.text.trim() !== '' &&
+            !opt.text.toLowerCase().includes('select') &&
+            !opt.text.toLowerCase().includes('choose')
+        );
+        
+        if (validOptions.length === 0) {
+            return false;
+        }
+        
+        const normalizedValue = value.toLowerCase().trim();
+        
+        // Try exact match first (value or text)
+        let matchingOption = validOptions.find(option => 
+            option.value.toLowerCase() === normalizedValue ||
+            option.text.toLowerCase() === normalizedValue
         );
 
-        // Try partial match
+        // Try partial match (contains)
         if (!matchingOption) {
-            matchingOption = options.find(option =>
-                option.text.toLowerCase().includes(value.toLowerCase()) ||
-                value.toLowerCase().includes(option.text.toLowerCase())
+            matchingOption = validOptions.find(option =>
+                option.text.toLowerCase().includes(normalizedValue) ||
+                option.value.toLowerCase().includes(normalizedValue)
+            );
+        }
+        
+        // Try reverse partial match (value contains option text)
+        if (!matchingOption) {
+            matchingOption = validOptions.find(option =>
+                normalizedValue.includes(option.text.toLowerCase()) ||
+                normalizedValue.includes(option.value.toLowerCase())
             );
         }
 
@@ -489,20 +523,67 @@
         if (!matchingOption) {
             const inputDigits = (value || '').replace(/\D/g, '');
             if (inputDigits) {
-                matchingOption = options.find(option => {
+                matchingOption = validOptions.find(option => {
                     const textDigits = (option.text || '').replace(/\D/g, '');
                     const valueDigits = (option.value || '').replace(/\D/g, '');
                     return inputDigits && (textDigits === inputDigits || valueDigits === inputDigits);
                 });
             }
         }
+        
+        // Try fuzzy/similarity matching for best match
+        if (!matchingOption && validOptions.length > 0) {
+            let bestMatch = null;
+            let bestScore = 0;
+            
+            for (const option of validOptions) {
+                const optionText = option.text.toLowerCase();
+                const optionValue = option.value.toLowerCase();
+                
+                // Calculate similarity score based on common words and character overlap
+                let score = 0;
+                
+                // Word-level matching
+                const valueWords = normalizedValue.split(/\s+/);
+                const optionWords = optionText.split(/\s+/);
+                
+                for (const vWord of valueWords) {
+                    for (const oWord of optionWords) {
+                        if (vWord && oWord) {
+                            if (vWord === oWord) {
+                                score += 10; // Exact word match
+                            } else if (vWord.includes(oWord) || oWord.includes(vWord)) {
+                                score += 5; // Partial word match
+                            }
+                        }
+                    }
+                }
+                
+                // Character overlap
+                const commonChars = [...normalizedValue].filter(c => optionText.includes(c)).length;
+                score += commonChars / normalizedValue.length;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = option;
+                }
+            }
+            
+            // Only use fuzzy match if score is reasonably high
+            if (bestScore >= 3) {
+                matchingOption = bestMatch;
+            }
+        }
 
         if (matchingOption) {
             element.value = matchingOption.value;
             triggerEvents(element);
+            console.log("Filled select field with:", matchingOption.text);
             return true;
         }
 
+        // If no match found, leave the field empty
+        console.log("No matching option found for:", value, "in select field");
         return false;
     }
 
