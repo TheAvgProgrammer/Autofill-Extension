@@ -126,7 +126,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 Object.keys(profile).forEach(key => {
                     const element = document.getElementById(key);
                     if (element && element.type !== 'file') {
-                        element.value = profile[key] || '';
+                        if (element.type === 'radio') {
+                            // For radio buttons, find the correct one by value
+                            const radioButton = document.querySelector(`input[name="${key}"][value="${profile[key]}"]`);
+                            if (radioButton) {
+                                radioButton.checked = true;
+                            }
+                        } else {
+                            element.value = profile[key] || '';
+                        }
+                    } else if (!element && key !== 'resume') {
+                        // Handle radio buttons by name
+                        const radioButton = document.querySelector(`input[name="${key}"][value="${profile[key]}"]`);
+                        if (radioButton) {
+                            radioButton.checked = true;
+                        }
                     }
                 });
             }

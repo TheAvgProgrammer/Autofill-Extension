@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test New Autofill Fields</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        select {
+            cursor: pointer;
+            background: white;
+            color: #333;
+        }
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .radio-label input {
+            width: auto;
+            margin-right: 8px;
+        }
+        .filled {
+            background-color: #d4edda !important;
+            border-color: #28a745 !important;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 4px;
+            border-left: 4px solid #ffc107;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Test New Autofill Fields</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong> Open the browser extension and fill in your profile with the new fields. 
+            Then click "Autofill Forms" to test if the extension properly fills these fields.
+        </div>
+
+        <form id="testForm">
+            <!-- Existing fields for reference -->
+            <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input type="text" id="firstName" name="first_name" placeholder="Enter your first name">
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name *</label>
+                <input type="text" id="lastName" name="last_name" placeholder="Enter your last name">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" placeholder="your.email@example.com">
+            </div>
+
+            <!-- NEW FIELD 1: Have you ever worked for our company before? -->
+            <div class="form-group">
+                <label>Have you ever worked for our company before? *</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="worked_before" value="yes">
+                        <span>Yes</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="worked_before" value="no">
+                        <span>No</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Previously employed at this organization?</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="previous_employment" value="yes">
+                        <span>Yes</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="previous_employment" value="no">
+                        <span>No</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- NEW FIELD 2: Race -->
+            <div class="form-group">
+                <label for="race">Race/Ethnicity</label>
+                <select id="race" name="race">
+                    <option value="">Please select</option>
+                    <option value="Hispanic or Latino">Hispanic or Latino</option>
+                    <option value="White (Not Hispanic or Latino)">White (Not Hispanic or Latino)</option>
+                    <option value="Black or African American (Not Hispanic or Latino)">Black or African American (Not Hispanic or Latino)</option>
+                    <option value="Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)">Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)</option>
+                    <option value="Asian (Not Hispanic or Latino)">Asian (Not Hispanic or Latino)</option>
+                    <option value="American Indian or Alaska Native (Not Hispanic or Latino)">American Indian or Alaska Native (Not Hispanic or Latino)</option>
+                    <option value="Two or More Races (Not Hispanic or Latino)">Two or More Races (Not Hispanic or Latino)</option>
+                    <option value="Decline to self-identify">Decline to self-identify</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="ethnicity">Ethnic Origin</label>
+                <select id="ethnicity" name="ethnicity">
+                    <option value="">Select your ethnicity</option>
+                    <option value="Hispanic">Hispanic or Latino</option>
+                    <option value="White">White (Not Hispanic or Latino)</option>
+                    <option value="Black">Black or African American (Not Hispanic or Latino)</option>
+                    <option value="Pacific Islander">Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)</option>
+                    <option value="Asian">Asian (Not Hispanic or Latino)</option>
+                    <option value="Native American">American Indian or Alaska Native (Not Hispanic or Latino)</option>
+                    <option value="Multiple">Two or More Races (Not Hispanic or Latino)</option>
+                    <option value="Prefer not to say">Decline to self-identify</option>
+                </select>
+            </div>
+
+            <!-- NEW FIELD 3: Gender -->
+            <div class="form-group">
+                <label for="gender">Gender *</label>
+                <select id="gender" name="gender">
+                    <option value="">Please select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="sex">Sex</label>
+                <select id="sex" name="sex">
+                    <option value="">Choose one</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                    <option value="O">Other</option>
+                </select>
+            </div>
+
+            <!-- Test fuzzy matching for "How did you hear about us" -->
+            <div class="form-group">
+                <label for="referralSource">How did you hear about this position?</label>
+                <select id="referralSource" name="referral_source">
+                    <option value="">Please choose</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="google_search">Google Search</option>
+                    <option value="twitter">Twitter / X</option>
+                    <option value="friend">Friend or Colleague</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="hearAbout">How did you learn about us?</label>
+                <select id="hearAbout" name="hear_about">
+                    <option value="">Select an option</option>
+                    <option value="1">LinkedIn</option>
+                    <option value="2">Google</option>
+                    <option value="3">Twitter</option>
+                    <option value="4">Referral from friend</option>
+                    <option value="5">Company website</option>
+                    <option value="6">Job board</option>
+                    <option value="7">Other</option>
+                </select>
+            </div>
+        </form>
+
+        <div class="result" id="result">
+            <strong>Test Result:</strong> <span id="resultMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        // Add event listeners to show when fields are filled
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('change', function() {
+                if (this.value) {
+                    this.classList.add('filled');
+                    console.log(`Field filled: ${this.name || this.id} = ${this.value}`);
+                }
+            });
+            
+            element.addEventListener('input', function() {
+                if (this.value) {
+                    this.classList.add('filled');
+                }
+            });
+        });
+
+        // Monitor for autofill events
+        let filledFieldsCount = 0;
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    if (target.classList.contains('filled')) {
+                        filledFieldsCount++;
+                        updateResult();
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('input, select').forEach(element => {
+            observer.observe(element, { attributes: true });
+        });
+
+        function updateResult() {
+            const resultDiv = document.getElementById('result');
+            const resultMessage = document.getElementById('resultMessage');
+            resultMessage.textContent = `${filledFieldsCount} field(s) have been filled by the extension.`;
+            resultDiv.classList.add('show');
+        }
+    </script>
+</body>
+</html>
