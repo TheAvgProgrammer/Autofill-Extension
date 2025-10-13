@@ -128,6 +128,31 @@
                     <option value="Other">Other</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>Worked Before:</label>
+                <select id="profile_workedBefore">
+                    <option value="yes">Yes</option>
+                    <option value="no" selected>No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Race:</label>
+                <select id="profile_race">
+                    <option value="Hispanic or Latino">Hispanic or Latino</option>
+                    <option value="White (Not Hispanic or Latino)">White (Not Hispanic or Latino)</option>
+                    <option value="Black or African American (Not Hispanic or Latino)">Black or African American (Not Hispanic or Latino)</option>
+                    <option value="Asian (Not Hispanic or Latino)" selected>Asian (Not Hispanic or Latino)</option>
+                    <option value="Decline to self-identify">Decline to self-identify</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Gender:</label>
+                <select id="profile_gender">
+                    <option value="Male" selected>Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
             <button onclick="performAutofill()">Autofill Form ➡️</button>
         </div>
 
@@ -205,6 +230,37 @@
                     <option value="Other">Other</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>Have you previously worked here?</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="worked_before" value="yes"> Yes
+                    </label>
+                    <label>
+                        <input type="radio" name="worked_before" value="no"> No
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Race/Ethnicity</label>
+                <select id="race" name="race">
+                    <option value="">Please select</option>
+                    <option value="Hispanic or Latino">Hispanic or Latino</option>
+                    <option value="White (Not Hispanic or Latino)">White (Not Hispanic or Latino)</option>
+                    <option value="Black or African American (Not Hispanic or Latino)">Black or African American (Not Hispanic or Latino)</option>
+                    <option value="Asian (Not Hispanic or Latino)">Asian (Not Hispanic or Latino)</option>
+                    <option value="Decline to self-identify">Decline to self-identify</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Gender</label>
+                <select id="gender" name="gender">
+                    <option value="">Please select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -225,7 +281,10 @@
                 pincode: document.getElementById('profile_pincode').value,
                 usWorkEligible: document.getElementById('profile_usWorkEligible').value,
                 sponsorshipRequired: document.getElementById('profile_sponsorshipRequired').value,
-                howDidYouHear: document.getElementById('profile_howDidYouHear').value
+                howDidYouHear: document.getElementById('profile_howDidYouHear').value,
+                workedBefore: document.getElementById('profile_workedBefore').value,
+                race: document.getElementById('profile_race').value,
+                gender: document.getElementById('profile_gender').value
             };
 
             // Enrich profile (simulate content.js logic)
