@@ -571,6 +571,54 @@
             }
         }
         
+        // Special handling for common dropdowns with regex patterns
+        if (!matchingOption) {
+            // Veteran status matching
+            if (/veteran/.test(normalizedValue)) {
+                if (/identify|protected|one or more/.test(normalizedValue)) {
+                    matchingOption = validOptions.find(opt => 
+                        /identify.*protected|protected.*veteran|one.*more.*classification/i.test(opt.text)
+                    );
+                } else if (/not.*protected|not.*veteran/.test(normalizedValue)) {
+                    matchingOption = validOptions.find(opt => 
+                        /not.*protected.*veteran|am not/i.test(opt.text)
+                    );
+                } else if (/decline|self.identify/.test(normalizedValue)) {
+                    matchingOption = validOptions.find(opt => 
+                        /decline.*self.identify/i.test(opt.text)
+                    );
+                }
+            }
+            
+            // Pronouns matching with regex
+            if (/she|he|they/i.test(normalizedValue)) {
+                // Match "She/Her/Hers" to options like "She/Her" or "she/her/hers"
+                const pronounPattern = normalizedValue.replace(/\//g, '\\s*[/]?\\s*');
+                const regex = new RegExp(pronounPattern, 'i');
+                matchingOption = validOptions.find(opt => regex.test(opt.text) || regex.test(opt.value));
+            }
+            
+            // Education degree matching
+            if (/bachelor|master|phd|associate|doctorate/i.test(normalizedValue)) {
+                matchingOption = validOptions.find(opt => {
+                    const optText = opt.text.toLowerCase();
+                    const optVal = opt.value.toLowerCase();
+                    if (/bachelor/i.test(normalizedValue) && /bachelor/i.test(optText + optVal)) return true;
+                    if (/master/i.test(normalizedValue) && /master/i.test(optText + optVal)) return true;
+                    if (/phd|doctorate/i.test(normalizedValue) && /phd|doctorate|doctoral/i.test(optText + optVal)) return true;
+                    if (/associate/i.test(normalizedValue) && /associate/i.test(optText + optVal)) return true;
+                    return false;
+                });
+            }
+            
+            // Yes/No matching with variations
+            if (/^yes$/i.test(normalizedValue)) {
+                matchingOption = validOptions.find(opt => /^yes$/i.test(opt.value) || /^yes$/i.test(opt.text));
+            } else if (/^no$/i.test(normalizedValue)) {
+                matchingOption = validOptions.find(opt => /^no$/i.test(opt.value) || /^no$/i.test(opt.text));
+            }
+        }
+        
         // Try fuzzy/similarity matching for best match
         if (!matchingOption && validOptions.length > 0) {
             let bestMatch = null;
