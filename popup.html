@@ -105,6 +105,26 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="relocateWilling">Are you located in or willing to relocate to work on-site?</label>
+                    <select id="relocateWilling" name="relocateWilling">
+                        <option value="">Please select</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pronouns">Preferred Pronouns</label>
+                    <select id="pronouns" name="pronouns">
+                        <option value="">Please select</option>
+                        <option value="She/Her/Hers">She/Her/Hers</option>
+                        <option value="He/Him/His">He/Him/His</option>
+                        <option value="They/Them/Theirs">They/Them/Theirs</option>
+                        <option value="She/They">She/They</option>
+                        <option value="He/They">He/They</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="workedBefore">Have you ever worked for our company before?</label>
                     <div class="radio-group">
                         <label class="radio-label">
@@ -116,6 +136,49 @@
                             <span>No</span>
                         </label>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="veteranStatus">Veteran Status</label>
+                    <select id="veteranStatus" name="veteranStatus">
+                        <option value="">Please select</option>
+                        <option value="I identify as one or more of the classifications of protected veteran listed above">I identify as one or more of the classifications of protected veteran</option>
+                        <option value="I am not a protected veteran">I am not a protected veteran</option>
+                        <option value="I decline to self-identify">I decline to self-identify</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="salaryMin">Salary Expectations - Minimum (Yearly)</label>
+                    <input type="text" id="salaryMin" name="salaryMin" placeholder="e.g., 80000">
+                </div>
+                <div class="form-group">
+                    <label for="salaryMax">Salary Expectations - Maximum (Yearly)</label>
+                    <input type="text" id="salaryMax" name="salaryMax" placeholder="e.g., 120000">
+                </div>
+                <div class="form-group">
+                    <label for="institution">Education - Institution</label>
+                    <input type="text" id="institution" name="institution" placeholder="e.g., University of California">
+                </div>
+                <div class="form-group">
+                    <label for="degreeType">Education - Degree Type</label>
+                    <select id="degreeType" name="degreeType">
+                        <option value="">Please select</option>
+                        <option value="Masters">Masters</option>
+                        <option value="Bachelors">Bachelors</option>
+                        <option value="PhD">PhD</option>
+                        <option value="Associate">Associate</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="graduationDate">Education - Graduation Date</label>
+                    <input type="text" id="graduationDate" name="graduationDate" placeholder="MM/YYYY or DD/MM/YYYY">
+                </div>
+                <div class="form-group">
+                    <label for="cgpa">Education - CGPA/GPA</label>
+                    <input type="text" id="cgpa" name="cgpa" placeholder="e.g., 3.8">
+                </div>
+                <div class="form-group">
+                    <label for="percentage">Education - Percentage (%)</label>
+                    <input type="text" id="percentage" name="percentage" placeholder="e.g., 85">
                 </div>
                 <div class="form-group">
                     <label for="race">Race</label>

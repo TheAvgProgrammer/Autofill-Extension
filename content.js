@@ -77,6 +77,46 @@
         gender: {
             priority: ['gender', 'sex', 'gender_identity'],
             keywords: ['gender', 'sex', 'male', 'female']
+        },
+        relocateWilling: {
+            priority: ['relocate', 'relocation', 'willing_relocate', 'relocate_willing', 'onsite', 'on_site', 'on-site', 'located', 'willing_to_relocate'],
+            keywords: ['relocate', 'relocation', 'willing', 'onsite', 'on-site', 'located', 'move', 'site']
+        },
+        pronouns: {
+            priority: ['pronouns', 'preferred_pronouns', 'pronoun', 'gender_pronouns'],
+            keywords: ['pronouns', 'pronoun', 'preferred', 'she', 'he', 'they']
+        },
+        veteranStatus: {
+            priority: ['veteran_status', 'veteran', 'military_status', 'protected_veteran', 'veteranstatus'],
+            keywords: ['veteran', 'military', 'protected', 'service', 'armed', 'forces']
+        },
+        salaryMin: {
+            priority: ['salary_min', 'salary_minimum', 'min_salary', 'minimum_salary', 'expected_salary_min', 'compensation_min', 'salary_expectation_min', 'salary_range_min'],
+            keywords: ['salary', 'minimum', 'min', 'compensation', 'expected', 'expectation', 'range', 'from']
+        },
+        salaryMax: {
+            priority: ['salary_max', 'salary_maximum', 'max_salary', 'maximum_salary', 'expected_salary_max', 'compensation_max', 'salary_expectation_max', 'salary_range_max'],
+            keywords: ['salary', 'maximum', 'max', 'compensation', 'expected', 'expectation', 'range', 'to']
+        },
+        institution: {
+            priority: ['institution', 'university', 'college', 'school', 'educational_institution', 'education_institution', 'institution_name'],
+            keywords: ['institution', 'university', 'college', 'school', 'education', 'educational']
+        },
+        degreeType: {
+            priority: ['degree_type', 'degree', 'education_level', 'qualification', 'degree_level', 'education_degree'],
+            keywords: ['degree', 'type', 'level', 'qualification', 'education', 'masters', 'bachelors', 'phd']
+        },
+        graduationDate: {
+            priority: ['graduation_date', 'graduation', 'grad_date', 'completion_date', 'date_graduation', 'graduated'],
+            keywords: ['graduation', 'grad', 'date', 'completion', 'graduated', 'finish', 'complete']
+        },
+        cgpa: {
+            priority: ['cgpa', 'gpa', 'grade_point', 'grade_point_average', 'cumulative_gpa', 'overall_gpa'],
+            keywords: ['cgpa', 'gpa', 'grade', 'point', 'average', 'cumulative']
+        },
+        percentage: {
+            priority: ['percentage', 'percent', 'marks', 'score', 'academic_percentage', 'grade_percentage'],
+            keywords: ['percentage', 'percent', 'marks', 'score', '%', 'grade']
         }
     };
 

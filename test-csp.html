@@ -234,6 +234,127 @@
                 </div>
             </div>
 
+            <!-- New Fields: Relocation -->
+            <div class="form-group">
+                <label for="relocate_willing">Are you located in or willing to relocate to work on-site?</label>
+                <select id="relocate_willing" name="relocate_willing">
+                    <option value="">Please select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+
+            <!-- New Fields: Pronouns -->
+            <div class="form-group">
+                <label for="preferred_pronouns">Preferred Pronouns</label>
+                <select id="preferred_pronouns" name="pronouns">
+                    <option value="">Please select</option>
+                    <option value="She/Her/Hers">She/Her/Hers</option>
+                    <option value="He/Him/His">He/Him/His</option>
+                    <option value="They/Them/Theirs">They/Them/Theirs</option>
+                    <option value="She/They">She/They</option>
+                    <option value="He/They">He/They</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <!-- New Fields: Previously Worked -->
+            <div class="form-group">
+                <label for="ever_worked">Have you ever worked at our organization or any of its subsidiaries?</label>
+                <select id="ever_worked" name="worked_before">
+                    <option value="">Please select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+
+            <!-- New Fields: Veteran Status -->
+            <div class="form-group">
+                <label for="veteran">Veteran Status</label>
+                <select id="veteran" name="veteran_status">
+                    <option value="">Please select</option>
+                    <option value="I identify as one or more of the classifications of protected veteran listed above">I identify as a protected veteran</option>
+                    <option value="I am not a protected veteran">I am not a protected veteran</option>
+                    <option value="I decline to self-identify">I decline to self-identify</option>
+                </select>
+            </div>
+
+            <!-- New Fields: Salary Expectations -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="salary_minimum">Salary Expectations - Minimum (Yearly)</label>
+                    <input type="text" id="salary_minimum" name="salary_min" placeholder="e.g., 80000">
+                </div>
+                <div class="form-group">
+                    <label for="salary_maximum">Salary Expectations - Maximum (Yearly)</label>
+                    <input type="text" id="salary_maximum" name="salary_max" placeholder="e.g., 120000">
+                </div>
+            </div>
+
+            <!-- New Fields: Education Details -->
+            <div class="form-group">
+                <label for="school_name">Education - Institution Name</label>
+                <input type="text" id="school_name" name="institution" placeholder="e.g., University of California">
+            </div>
+
+            <div class="form-group">
+                <label for="degree_type">Education - Type of Degree</label>
+                <select id="degree_type" name="degree">
+                    <option value="">Please select</option>
+                    <option value="Masters">Masters</option>
+                    <option value="Bachelors">Bachelors</option>
+                    <option value="PhD">PhD</option>
+                    <option value="Associate">Associate</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="graduation_date">Graduation Date (MM/YYYY or DD/MM/YYYY)</label>
+                <input type="text" id="graduation_date" name="grad_date" placeholder="06/2020 or 15/06/2020">
+            </div>
+
+            <div class="form-group">
+                <label for="gpa">CGPA/GPA</label>
+                <input type="text" id="gpa" name="cgpa" placeholder="e.g., 3.8">
+            </div>
+
+            <div class="form-group">
+                <label for="marks_percentage">Percentage (%)</label>
+                <input type="text" id="marks_percentage" name="percentage" placeholder="e.g., 85">
+            </div>
+
+            <!-- Race/Gender fields -->
+            <div class="form-group">
+                <label for="race_ethnicity">Race/Ethnicity</label>
+                <select id="race_ethnicity" name="race">
+                    <option value="">Please select</option>
+                    <option value="Hispanic or Latino">Hispanic or Latino</option>
+                    <option value="White (Not Hispanic or Latino)">White (Not Hispanic or Latino)</option>
+                    <option value="Black or African American (Not Hispanic or Latino)">Black or African American (Not Hispanic or Latino)</option>
+                    <option value="Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)">Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)</option>
+                    <option value="Asian (Not Hispanic or Latino)">Asian (Not Hispanic or Latino)</option>
+                    <option value="American Indian or Alaska Native (Not Hispanic or Latino)">American Indian or Alaska Native (Not Hispanic or Latino)</option>
+                    <option value="Two or More Races (Not Hispanic or Latino)">Two or More Races (Not Hispanic or Latino)</option>
+                    <option value="Decline to self-identify">Decline to self-identify</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="gender_identity">Gender</label>
+                <select id="gender_identity" name="gender">
+                    <option value="">Please select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
+
+            <!-- Resume Upload -->
+            <div class="form-group">
+                <label for="resume_upload">Upload Resume (PDF/DOC/DOCX)</label>
+                <input type="file" id="resume_upload" name="resume" accept=".pdf,.doc,.docx">
+            </div>
+
             <button type="submit" class="submit-btn">Submit Application</button>
         </form>
     </div>
