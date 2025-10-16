@@ -117,6 +117,10 @@
         percentage: {
             priority: ['percentage', 'percent', 'marks', 'score', 'academic_percentage', 'grade_percentage'],
             keywords: ['percentage', 'percent', 'marks', 'score', '%', 'grade']
+        },
+        noticePeriod: {
+            priority: ['notice_period', 'noticeperiod', 'notice', 'availability', 'available', 'joining_date', 'join_date', 'start_date', 'when_available', 'notice-period', 'joining-date'],
+            keywords: ['notice', 'period', 'availability', 'available', 'joining', 'join', 'start', 'when', 'weeks', 'immediately']
         }
     };
 
@@ -382,35 +386,69 @@
                 return 0;
             }
         }
-        const searchText = [
-            field.name,
-            field.id,
-            field.placeholder,
-            field.label,
-            field.ariaLabel
-        ].join(' ').toLowerCase();
-
-        // Check priority keywords first (higher score)
+        // Strategy: Give highest priority to label text when it exists and matches
+        // Label text is the most reliable indicator of field purpose
+        const labelText = (field.label || '').toLowerCase();
+        const ariaLabelText = (field.ariaLabel || '').toLowerCase();
+        const nameIdPlaceholderText = [field.name, field.id, field.placeholder].join(' ').toLowerCase();
+        
+        // Check label text first with much higher weights (label has highest priority)
+        if (labelText) {
+            mapping.priority.forEach((keyword, index) => {
+                if (labelText.includes(keyword.toLowerCase())) {
+                    // Large boost for label priority keyword matches (3x normal weight)
+                    score += (mapping.priority.length - index) * 30;
+                }
+            });
+            
+            mapping.keywords.forEach(keyword => {
+                if (labelText.includes(keyword.toLowerCase())) {
+                    // Large boost for label keyword matches (3x normal weight)
+                    score += 15;
+                }
+            });
+        }
+        
+        // Check aria-label with medium boost (2x normal weight)
+        if (ariaLabelText) {
+            mapping.priority.forEach((keyword, index) => {
+                if (ariaLabelText.includes(keyword.toLowerCase())) {
+                    score += (mapping.priority.length - index) * 20;
+                }
+            });
+            
+            mapping.keywords.forEach(keyword => {
+                if (ariaLabelText.includes(keyword.toLowerCase())) {
+                    score += 10;
+                }
+            });
+        }
+        
+        // Check name, id, placeholder with normal weights
         mapping.priority.forEach((keyword, index) => {
-            if (searchText.includes(keyword.toLowerCase())) {
+            if (nameIdPlaceholderText.includes(keyword.toLowerCase())) {
                 score += (mapping.priority.length - index) * 10;
             }
         });
 
-        // Check general keywords
         mapping.keywords.forEach(keyword => {
-            if (searchText.includes(keyword.toLowerCase())) {
+            if (nameIdPlaceholderText.includes(keyword.toLowerCase())) {
                 score += 5;
             }
         });
 
         console.log('Score for field:', field, 'is', score);
 
-        // Bonus for exact matches
+        // Bonus for exact matches in name/id
         const exactMatches = [field.name, field.id].filter(attr => 
             attr && mapping.priority.includes(attr.toLowerCase())
         );
         score += exactMatches.length * 15;
+        
+        // Extra bonus for exact matches in label (highest priority)
+        if (labelText && mapping.priority.some(keyword => labelText === keyword.toLowerCase())) {
+            score += 50;
+        }
 
         // Heuristic: if mapping is for dial-code and this select's options look like dialing codes, boost score
         try {
