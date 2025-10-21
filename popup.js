@@ -155,8 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateProfileLabel(profileId, profile) {
         const option = profileSelect.querySelector(`option[value="${profileId}"]`);
-        if (profile && profile.firstName && profile.lastName) {
-            option.textContent = `Profile ${profileId}: ${profile.firstName} ${profile.lastName}`;
+        if (profile && (profile.linkedinUrl || profile.usWorkEligible || profile.sponsorshipRequired)) {
+            option.textContent = `Profile ${profileId} (configured)`;
         } else {
             option.textContent = `Profile ${profileId}`;
         }
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        const requiredFields = ['firstName', 'lastName', 'email', 'countryCode', 'phone', 'country', 'state', 'city', 'pincode', 'usWorkEligible', 'sponsorshipRequired'];
+        const requiredFields = ['usWorkEligible', 'sponsorshipRequired'];
         const missingFields = requiredFields.filter(field => !profile[field]);
 
         // Clear previous error states
@@ -254,20 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(profile.email)) {
-            const emailGroup = document.getElementById('email').closest('.form-group');
-            if (emailGroup) {
-                emailGroup.classList.add('error');
-                const errorMsg = document.createElement('div');
-                errorMsg.className = 'error-message';
-                errorMsg.textContent = 'Please enter a valid email address';
-                emailGroup.appendChild(errorMsg);
-                emailGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            showStatus('Please enter a valid email address', 'error');
-            return;
-        }
+
 
         // Add success states to all fields
         document.querySelectorAll('.form-group').forEach(group => {
@@ -417,12 +404,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const firstName = (profile.firstName || '').trim();
-            const lastName = (profile.lastName || '').trim();
-            const clientName = [firstName, lastName].filter(Boolean).join(' ');
+            // Use profile ID as client name since we no longer store first/last name
+            const clientName = `Profile ${currentProfileId}`;
 
             if (!clientName) {
-                showStatus('Screenshot ready, but the profile is missing a first or last name.', 'error');
+                showStatus('Screenshot ready, but unable to identify client from profile.', 'error');
                 updateSendProofButton(Boolean(lastScreenshotDataUrl));
                 return;
             }
@@ -566,17 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 msg.className = 'error-message';
                 msg.textContent = 'This field is required';
                 formGroup.appendChild(msg);
-            } else if (e.target.type === 'email' && e.target.value) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(e.target.value)) {
-                    formGroup.classList.add('error');
-                    const msg = document.createElement('div');
-                    msg.className = 'error-message';
-                    msg.textContent = 'Please enter a valid email';
-                    formGroup.appendChild(msg);
-                } else {
-                    formGroup.classList.add('success');
-                }
             } else if (e.target.value.trim()) {
                 formGroup.classList.add('success');
             }

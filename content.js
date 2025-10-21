@@ -1,4 +1,21 @@
 (function() {
+    // Fields that should be skipped and deferred to Chrome's native autofill
+    const SKIP_FIELDS = ['firstName', 'lastName', 'fullName', 'email', 'phone', 'countryCode', 'country', 'state', 'city', 'pincode'];
+    
+    // Map of field patterns to standard autocomplete attributes for Chrome's autofill
+    const AUTOCOMPLETE_ATTRIBUTES = {
+        firstName: 'given-name',
+        lastName: 'family-name',
+        email: 'email',
+        phone: 'tel',
+        countryCode: 'tel-country-code',
+        country: 'country',
+        state: 'address-level1',
+        city: 'address-level2',
+        pincode: 'postal-code',
+        address: 'address-line1'
+    };
+
     // Field mappings for regex-based autofill
     const FIELD_MAPPINGS = {
         firstName: {
@@ -124,9 +141,39 @@
         }
     };
 
+    /**
+     * Set autocomplete attributes on contact/address fields to improve Chrome's autofill suggestions
+     */
+    function setAutocompleteAttributes() {
+        const formFields = findFormFields();
+        let attributesSet = 0;
+        
+        Object.keys(AUTOCOMPLETE_ATTRIBUTES).forEach(profileKey => {
+            const autocompleteValue = AUTOCOMPLETE_ATTRIBUTES[profileKey];
+            const matchedFields = findMatchingFields(formFields, profileKey);
+            
+            matchedFields.forEach(({ field }) => {
+                if (field.element && !field.element.getAttribute('autocomplete')) {
+                    field.element.setAttribute('autocomplete', autocompleteValue);
+                    attributesSet++;
+                }
+            });
+        });
+        
+        if (attributesSet > 0) {
+            console.log(`[Autofill Extension] Set autocomplete attributes on ${attributesSet} contact/address fields for Chrome's native autofill`);
+        }
+    }
+
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
-            // Use regex-based autofill
+            // First, set autocomplete attributes to help Chrome's autofill
+            setAutocompleteAttributes();
+            
+            // Log that personal/contact fields are deferred to browser
+            console.log('[Autofill Extension] Personal contact and address fields (name, email, phone, address, city, state, postal code, country) are deferred to Chrome\'s Address Autofill. Focus on these fields to trigger browser suggestions.');
+            
+            // Use regex-based autofill for remaining fields
             const result = performAutofill(request.profile, request.resumeFile);
             sendResponse(result);
         }
@@ -169,6 +216,11 @@
             profileKeys.forEach(k => { if (!orderedKeys.includes(k)) orderedKeys.push(k); });
 
             orderedKeys.forEach(profileKey => {
+                // Skip contact/address fields - defer to Chrome's autofill
+                if (SKIP_FIELDS.includes(profileKey)) {
+                    return;
+                }
+                
                 const rawVal = enrichedProfile[profileKey];
                 const value = typeof rawVal === 'string' ? rawVal.trim() : rawVal;
                 if (value) {
