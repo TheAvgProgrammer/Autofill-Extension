@@ -44,8 +44,8 @@
             keywords: ['state', 'province', 'region']
         },
         city: {
-            priority: ['city', 'town', 'locality'],
-            keywords: ['city', 'town', 'locality']
+            priority: ['city', 'town', 'locality', 'address'],
+            keywords: ['city', 'town', 'locality', 'address']
         },
         pincode: {
             priority: ['pincode', 'zipcode', 'zip', 'postal_code', 'postcode'],
@@ -134,7 +134,6 @@
     });
 
     function performAutofill(profile, resumeFile) {
-        console.log('Starting autofill with profile:', profile);
         try {
             const formFields = findFormFields();
             let fieldsFound = 0;
@@ -161,7 +160,6 @@
             //     }
             // }
 
-            // console.log(enrichedProfile)
 
             // Process each profile field (ensure phone first, then countryCode) to avoid dial code overwriting phone
             const profileKeys = Object.keys(enrichedProfile);
@@ -175,9 +173,10 @@
                 const value = typeof rawVal === 'string' ? rawVal.trim() : rawVal;
                 if (value) {
                     const matchedFields = findMatchingFields(formFields, profileKey);
+                    // console.log(`Profile key: ${profileKey}, Value: ${value}, Matched fields:`, matchedFields);
                     if (matchedFields && matchedFields.length > 0) {
                         // Try filling the top match first; if it succeeds, count it
-                        const filled = fillField(matchedFields[0], String(value));
+                        const filled = fillField(matchedFields[0].field, String(value));
                         if (filled) {
                             fieldsFound += 1;
                         }
@@ -201,33 +200,41 @@
 
 
 
-    function attachResumeToInputs(resumeFile) {
-        if (!resumeFile || !resumeFile.data) {
-            return 0;
-        }
+function attachResumeToInputs(resumeFile) {
+    if (!resumeFile || !resumeFile.data) return 0;
 
-        let attachments = 0;
-        document.querySelectorAll("input[type='file']").forEach(el => {
-            try {
-                const base64Data = resumeFile.data.split(',')[1];
-                const binary = atob(base64Data);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
-                const fileObj = new File([bytes], resumeFile.name, { type: resumeFile.type });
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(fileObj);
-                el.files = dataTransfer.files;
-                attachments += 1;
-            } catch (ex) {
-                console.warn('Resume attachment failed for input', ex);
+    let attachments = 0;
+    document.querySelectorAll("input[type='file']").forEach(el => {
+
+        // If secure assignment fails, prompt the user
+        try {
+            const base64Data = resumeFile.data.split(',')[1];
+            const binary = atob(base64Data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+            const fileObj = new File([bytes], resumeFile.name, { type: resumeFile.type });
+            const dt = new DataTransfer();
+            dt.items.add(fileObj);
+            el.files = dt.files;
+
+            // Dispatch change to trigger listeners
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+
+            if (el.files.length) attachments++;
+            else {
+                console.warn('File not attached — likely blocked or overridden.');
                 el.setAttribute('data-autofill-failed', 'resume');
             }
-        });
+        } catch (ex) {
+            console.warn('Resume attachment failed for input', ex);
+        }
+    });
 
-        return attachments;
-    }
+    console.log(`Resume attachments: ${attachments}`);
+    return attachments;
+}
+
 
     function findFormFields() {
         const fields = [];
@@ -352,105 +359,111 @@
         const usedElements = new Set();
         scoredFields.forEach(({ field }) => {
             if (!usedElements.has(field.element) && matches.length < 3) {
-                matches.push(field);
+                matches.push({field, score: field.score});
                 usedElements.add(field.element);
             }
         });
-
-        return matches;
+        return scoredFields;
     }
 
     function calculateFieldScore(field, mapping) {
         let score = 0;
-        // Restrict dial-code mapping to selects only to avoid filling phone inputs with country codes
+
+        // Ensure early return for non-relevant fields based on special types
         if (mapping && mapping.specialType === 'dialCode' && field.tagName !== 'select') {
             return 0;
         }
-        // Additional constraints for referral mapping (howDidYouHear)
+
         if (mapping && mapping.specialType === 'referral') {
-            const sText = [
-                field.name,
-                field.id,
-                field.placeholder,
-                field.label,
-                field.ariaLabel
-            ].join(' ').toLowerCase();
+            const sText = [field.name, field.id, field.placeholder].join(' ').toLowerCase();
 
             // Must include one of these to qualify
             const mustHave = /(hear|referral|source|about)/;
             if (!mustHave.test(sText)) {
                 return 0;
             }
+
             // Exclude obvious experience/tenure questions
             if (/(years?|experience|exp|months?)/.test(sText)) {
                 return 0;
             }
         }
-        // Strategy: Give highest priority to label text when it exists and matches
-        // Label text is the most reliable indicator of field purpose
+
+        // Priority scoring
         const labelText = (field.label || '').toLowerCase();
         const ariaLabelText = (field.ariaLabel || '').toLowerCase();
         const nameIdPlaceholderText = [field.name, field.id, field.placeholder].join(' ').toLowerCase();
-        
-        // Check label text first with much higher weights (label has highest priority)
+
+        // Score Placeholder: Highest Priority
+        if (field.placeholder) {
+            mapping.priority.forEach((keyword, index) => {
+                if (field.placeholder.toLowerCase().includes(keyword.toLowerCase())) {
+                    score += (mapping.priority.length - index) * 30; // Higher weight for placeholder match
+                }
+            });
+
+            mapping.keywords.forEach(keyword => {
+                if (field.placeholder.toLowerCase().includes(keyword.toLowerCase())) {
+                    score += 20; // Moderate boost for placeholder keyword match
+                }
+            });
+        }
+
+        // Score Label: Second Priority
         if (labelText) {
             mapping.priority.forEach((keyword, index) => {
                 if (labelText.includes(keyword.toLowerCase())) {
-                    // Large boost for label priority keyword matches (3x normal weight)
-                    score += (mapping.priority.length - index) * 30;
+                    score += (mapping.priority.length - index) * 10; // Moderate weight for label match
                 }
             });
-            
+
             mapping.keywords.forEach(keyword => {
                 if (labelText.includes(keyword.toLowerCase())) {
-                    // Large boost for label keyword matches (3x normal weight)
-                    score += 15;
+                    score += 15; // Moderate boost for label keyword match
                 }
             });
         }
-        
-        // Check aria-label with medium boost (2x normal weight)
-        if (ariaLabelText) {
-            mapping.priority.forEach((keyword, index) => {
-                if (ariaLabelText.includes(keyword.toLowerCase())) {
-                    score += (mapping.priority.length - index) * 20;
-                }
-            });
-            
-            mapping.keywords.forEach(keyword => {
-                if (ariaLabelText.includes(keyword.toLowerCase())) {
-                    score += 10;
-                }
-            });
-        }
-        
-        // Check name, id, placeholder with normal weights
+
+        // Score Aria-Label: Medium Priority
+        // if (ariaLabelText) {
+        //     mapping.priority.forEach((keyword, index) => {
+        //         if (ariaLabelText.includes(keyword.toLowerCase())) {
+        //             score += (mapping.priority.length - index) * 15; // Medium weight for aria-label match
+        //         }
+        //     });
+
+        //     mapping.keywords.forEach(keyword => {
+        //         if (ariaLabelText.includes(keyword.toLowerCase())) {
+        //             score += 10; // Moderate boost for aria-label keyword match
+        //         }
+        //     });
+        // }
+
+        // Score Name/ID/Placeholder: Least Priority
         mapping.priority.forEach((keyword, index) => {
             if (nameIdPlaceholderText.includes(keyword.toLowerCase())) {
-                score += (mapping.priority.length - index) * 10;
+                score += (mapping.priority.length - index) * 10; // Lower weight for name/id/placeholder match
             }
         });
 
         mapping.keywords.forEach(keyword => {
             if (nameIdPlaceholderText.includes(keyword.toLowerCase())) {
-                score += 5;
+                score += 5; // Small boost for name/id/placeholder keyword match
             }
         });
 
-        console.log('Score for field:', field, 'is', score);
-
-        // Bonus for exact matches in name/id
-        const exactMatches = [field.name, field.id].filter(attr => 
+        // Exact Match Bonus for Name, ID, Placeholder, and Label
+        const exactMatches = [field.name, field.id].filter(attr =>
             attr && mapping.priority.includes(attr.toLowerCase())
         );
-        score += exactMatches.length * 15;
-        
+        score += exactMatches.length * 20; // Bonus for exact matches in name/id
+
         // Extra bonus for exact matches in label (highest priority)
         if (labelText && mapping.priority.some(keyword => labelText === keyword.toLowerCase())) {
-            score += 50;
+            score += 50; // Large bonus for exact match in label
         }
 
-        // Heuristic: if mapping is for dial-code and this select's options look like dialing codes, boost score
+        // Heuristic for Dial Code / Referral Fields (Dial Code and Referral fields have special logic)
         try {
             if (mapping.specialType === 'dialCode' && field.tagName === 'select' && field.element && field.element.options) {
                 const options = Array.from(field.element.options);
@@ -458,22 +471,18 @@
                 for (const opt of options) {
                     const txt = (opt.text || '').toLowerCase();
                     const val = (opt.value || '').toLowerCase();
-                    // Common patterns: "+1", "(+1)", "United States (+1)", value "1" or "+1"
                     const hasPlusDigits = /\+\s*\d{1,4}/.test(txt) || /\(\s*\+\s*\d{1,4}\s*\)/.test(txt) || /^\+?\d{1,4}$/.test(val);
                     const hasCountryAndDigits = /[a-z]/.test(txt) && /\d{1,4}/.test(txt);
-                    if (hasPlusDigits || hasCountryAndDigits) {
-                        dialLikeCount++;
-                    }
+                    if (hasPlusDigits || hasCountryAndDigits) dialLikeCount++;
                 }
                 if (dialLikeCount >= 3) {
-                    // Strong indication this is a dial-code select
                     score += 60 + Math.min(40, dialLikeCount);
                 }
             }
+
             if (mapping.specialType === 'referral' && field.tagName === 'select' && field.element && field.element.options) {
                 const options = Array.from(field.element.options);
-                let referralLike = 0;
-                let numericLike = 0;
+                let referralLike = 0, numericLike = 0;
                 for (const opt of options) {
                     const txt = (opt.text || '').toLowerCase();
                     if (/^\s*\d+\s*$/.test(txt)) numericLike++;
@@ -481,24 +490,15 @@
                         referralLike++;
                     }
                 }
-                // If numeric dominates, it's not a referral select
-                if (numericLike >= Math.max(3, referralLike + 1)) {
-                    return 0;
-                }
-                if (referralLike >= 2) {
-                    score += 40;
-                }
+                if (numericLike >= Math.max(3, referralLike + 1)) return 0;
+                if (referralLike >= 2) score += 40;
             }
-        } catch (e) {
-            // ignore heuristic errors
-        }
+        } catch (e) { /* ignore heuristic errors */ }
 
-        if (score > 0) {
-            // console.log('Field matched:', field, 'Score:', score);
-        }
-
+        console.log(`Field:`, field, `Score for ${mapping.specialType || 'standard'} field:`, score);
         return score;
     }
+
 
     function isLikelyDialCode(val) {
         if (!val) return false;
@@ -543,7 +543,6 @@
     function fillInputField(element, value) {
         // Set the value
         element.value = value;
-        // console.log("Filling input: ", element, " with value: ", value);
         // Trigger events to ensure the change is registered
         triggerEvents(element);
         
@@ -552,7 +551,6 @@
 
     function fillTextArea(element, value) {
         element.value = value;
-        console.log("Filling textarea: ", element, " with value: ", value);
         triggerEvents(element);
         return true;
     }
@@ -560,7 +558,7 @@
     function fillSelectField(element, value) {
         // For select fields, try to find a matching option
         const options = Array.from(element.options);
-        
+        console.log(options)
         // Skip empty/placeholder options
         const validOptions = options.filter(opt => 
             opt.value && opt.value.trim() !== '' && 
@@ -704,7 +702,6 @@
         if (matchingOption) {
             element.value = matchingOption.value;
             triggerEvents(element);
-            console.log("Filled select field with:", matchingOption.text);
             return true;
         }
 
