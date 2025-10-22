@@ -5,16 +5,16 @@ A Chrome extension that automatically fills job application forms with your save
 ## Features
 
 - **Multi-Profile Support**: Store and manage up to 5 different profiles
-- **Comprehensive Profile Fields**: First Name, Last Name, Full Name, LinkedIn URL, Email Address, Phone Number with Country Code, Country, State, City, Pincode, US Work Authorization, Visa Sponsorship, Referral Source, and Resume File
-- **International Phone Support**: Separate country code and phone number fields that automatically combine during autofill (e.g., "+1 5551234567")
-- **Dial-Code Dropdown Support**: Detects and fills phone country code <select> fields (e.g., "United States (+1)", "+91"), and keeps the phone input local-only when such a dropdown exists.
+- **Workday Optimization**: First-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized widget handlers
+- **Multi-Page Flow Support**: Automatically handles multi-page applications with progress tracking and dynamic content detection
+- **Comprehensive Profile Fields**: LinkedIn URL, GitHub URL, Portfolio URL, US Work Authorization, Visa Sponsorship, Referral Source, Education, Experience, Salary Expectations, and Resume File
+- **Contact Field Deferral**: Personal contact and address fields (name, email, phone, address, city, state, postal code, country) are deferred to Chrome's built-in Address Autofill for better privacy and security
 - **Referral Source Tracking**: "How did you hear about us?" field with options: LinkedIn, Google, Twitter, Friend, Other
 - **Intelligent Pattern Matching**: Uses regex-based field detection to identify form fields accurately
-- **Full Name Support**: Automatically combines first and last name for "Full Name" fields
 - **Radio Button Support**: Handles both dropdown and radio button inputs for yes/no questions
 - **US Work Authorization**: Automatically fills work authorization questions (dropdowns and radio buttons)
 - **Visa Sponsorship**: Automatically fills visa sponsorship questions (dropdowns and radio buttons)
-- **Resume Upload**: Automatically uploads your resume file to file input fields
+- **Resume Upload**: Automatically uploads your resume file to file input fields (including Workday file uploads)
 - **Simple Interface**: Clean two-tab design (Profile & Autofill)
 
 ## How to Use
@@ -73,21 +73,53 @@ The extension includes comprehensive test files to verify autofill functionality
    - US Work Authorization (dropdown and radio buttons)
    - Visa Sponsorship (dropdown and radio buttons)
    - Standard contact fields
+4. **test-workday.html** - Workday-specific test form with realistic structure:
+   - Multi-page flow with progress tracking (4 pages)
+   - Data-automation-id attributes on all fields
+   - Workday-style widgets (textInput, selectWidget, datePicker, fileUpload)
+   - Work authorization and sponsorship questions
+   - Education and experience fields
+   - Salary expectations and additional questions
 
 ### How to Test
 
 1. Load the extension in Chrome (Developer mode)
 2. Open any of the test files in a new tab
-3. Set up a profile in the extension with all required fields (including country code and phone number separately)
+3. Set up a profile in the extension with all required fields:
+   - LinkedIn URL, GitHub URL (optional)
+   - US Work Eligible, Sponsorship Required
+   - Education details (institution, degree, major, GPA, graduation date)
+   - Experience details (employer, job title)
+   - Salary expectations (min/max)
+   - Resume file (PDF/DOC/DOCX)
+   - Other optional fields
 4. Click "Autofill Forms" button in the extension popup
 5. Verify that all fields are filled correctly including:
-   - First and last names in their respective fields
-   - Full name fields automatically populated with "FirstName LastName"
-   - Phone fields populated with combined country code + phone number (e.g., "+1 5551234567")
-   - "How did you hear about us?" dropdowns filled with selected referral source
    - Work authorization set to "Yes" or "No" based on profile
    - Visa sponsorship set to "Yes" or "No" based on profile
    - Radio buttons correctly selected for yes/no questions
+   - LinkedIn, GitHub, and portfolio URLs filled
+   - Education and experience details populated
+   - Salary expectations filled
+   - Resume file uploaded
+
+### Testing Workday Support
+
+To test Workday-specific functionality:
+
+1. Open **test-workday.html** in a new tab
+2. Set up your profile with all fields
+3. Click "Autofill Forms" in the extension popup
+4. Verify:
+   - Extension detects Workday mode (check console log)
+   - Contact fields remain empty (for Chrome autofill)
+   - All non-contact fields are filled across all 4 pages
+   - File upload works for resume
+   - Navigation between pages works smoothly
+   - Progress is maintained across pages
+5. Focus on contact fields (name, email, phone) and verify Chrome's autofill suggestions appear
+
+**Note**: Contact/address fields are intentionally left empty by the extension. To fill them, click on each field and use Chrome's built-in autofill suggestions (make sure you have addresses saved in Chrome Settings → Autofill → Addresses).
 
 ## How It Works
 

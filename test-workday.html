@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workday Job Application Test - Multi-Page Flow</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .workday-container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .workday-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .workday-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .workday-header .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        .workday-section {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .workday-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .workday-field-group {
+            margin-bottom: 24px;
+        }
+        .workday-field-label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .workday-field-label .required {
+            color: #d32f2f;
+            margin-left: 4px;
+        }
+        [data-automation-id="textInput"],
+        [data-automation-id="datePicker"],
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        [data-automation-id="textInput"]:focus,
+        [data-automation-id="datePicker"]:focus,
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #0073e6;
+            box-shadow: 0 0 0 3px rgba(0, 115, 230, 0.1);
+        }
+        [data-automation-id="selectWidget"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .workday-radio-group,
+        .workday-checkbox-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .workday-radio-item,
+        .workday-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .workday-radio-item input,
+        .workday-checkbox-item input {
+            width: auto;
+            cursor: pointer;
+        }
+        .workday-radio-item label,
+        .workday-checkbox-item label {
+            cursor: pointer;
+            margin: 0;
+        }
+        .workday-button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .workday-button {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .workday-button-primary {
+            background-color: #0073e6;
+            color: white;
+        }
+        .workday-button-primary:hover {
+            background-color: #005bb5;
+        }
+        .workday-button-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .workday-button-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        .workday-progress {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+        .workday-progress-step {
+            width: 30px;
+            height: 4px;
+            background-color: #e0e0e0;
+            border-radius: 2px;
+        }
+        .workday-progress-step.completed {
+            background-color: #0073e6;
+        }
+        .workday-progress-step.active {
+            background-color: #0073e6;
+        }
+        .workday-info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+        .workday-info-box p {
+            margin: 0;
+            color: #1565c0;
+            font-size: 14px;
+        }
+        [data-automation-id="fileUpload"] {
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="workday-container">
+        <div class="workday-header">
+            <h1>Software Engineer Position</h1>
+            <p class="subtitle">ABC Technology Company</p>
+        </div>
+
+        <div class="workday-info-box">
+            <p><strong>⚠️ Workday Test Form:</strong> This simulates a multi-page Workday job application with data-automation-id attributes and role-based widgets. Contact fields should remain empty for Chrome autofill.</p>
+        </div>
+
+        <div class="workday-progress" id="progressBar">
+            <div class="workday-progress-step active" data-step="1"></div>
+            <div class="workday-progress-step" data-step="2"></div>
+            <div class="workday-progress-step" data-step="3"></div>
+            <div class="workday-progress-step" data-step="4"></div>
+        </div>
+
+        <!-- Page 1: Basic Information -->
+        <div class="workday-section active" id="page1">
+            <h2>Basic Information</h2>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-firstname">
+                    First Name<span class="required">*</span>
+                </label>
+                <input type="text" 
+                       id="wd-firstname" 
+                       data-automation-id="textInput"
+                       autocomplete="given-name"
+                       aria-label="First Name">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-lastname">
+                    Last Name<span class="required">*</span>
+                </label>
+                <input type="text" 
+                       id="wd-lastname" 
+                       data-automation-id="textInput"
+                       autocomplete="family-name"
+                       aria-label="Last Name">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-email">
+                    Email Address<span class="required">*</span>
+                </label>
+                <input type="email" 
+                       id="wd-email" 
+                       data-automation-id="textInput"
+                       autocomplete="email"
+                       aria-label="Email Address">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-phone">
+                    Phone Number<span class="required">*</span>
+                </label>
+                <input type="tel" 
+                       id="wd-phone" 
+                       data-automation-id="textInput"
+                       autocomplete="tel"
+                       aria-label="Phone Number">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-linkedin">
+                    LinkedIn Profile URL
+                </label>
+                <input type="text" 
+                       id="wd-linkedin" 
+                       data-automation-id="textInput"
+                       aria-label="LinkedIn Profile URL">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-github">
+                    GitHub Profile URL
+                </label>
+                <input type="text" 
+                       id="wd-github" 
+                       data-automation-id="textInput"
+                       aria-label="GitHub Profile URL">
+            </div>
+
+            <div class="workday-button-group">
+                <button type="button" class="workday-button workday-button-secondary" disabled>Previous</button>
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        data-automation-id="continueButton"
+                        onclick="goToPage(2)">Continue</button>
+            </div>
+        </div>
+
+        <!-- Page 2: Work Authorization & Availability -->
+        <div class="workday-section" id="page2">
+            <h2>Work Authorization & Availability</h2>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label">
+                    Are you legally authorized to work in the United States?<span class="required">*</span>
+                </label>
+                <div class="workday-radio-group">
+                    <div class="workday-radio-item">
+                        <input type="radio" 
+                               id="work-auth-yes" 
+                               name="workAuthorization"
+                               value="yes"
+                               role="radio"
+                               data-automation-id="radio-workAuth-yes">
+                        <label for="work-auth-yes">Yes</label>
+                    </div>
+                    <div class="workday-radio-item">
+                        <input type="radio" 
+                               id="work-auth-no" 
+                               name="workAuthorization"
+                               value="no"
+                               role="radio"
+                               data-automation-id="radio-workAuth-no">
+                        <label for="work-auth-no">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label">
+                    Will you now or in the future require sponsorship for employment visa status?<span class="required">*</span>
+                </label>
+                <div class="workday-radio-group">
+                    <div class="workday-radio-item">
+                        <input type="radio" 
+                               id="sponsor-yes" 
+                               name="sponsorshipRequired"
+                               value="yes"
+                               role="radio"
+                               data-automation-id="radio-sponsorship-yes">
+                        <label for="sponsor-yes">Yes</label>
+                    </div>
+                    <div class="workday-radio-item">
+                        <input type="radio" 
+                               id="sponsor-no" 
+                               name="sponsorshipRequired"
+                               value="no"
+                               role="radio"
+                               data-automation-id="radio-sponsorship-no">
+                        <label for="sponsor-no">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-start-date">
+                    What is your earliest available start date?
+                </label>
+                <input type="date" 
+                       id="wd-start-date" 
+                       data-automation-id="datePicker"
+                       aria-label="Start Date">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-relocate">
+                    Are you willing to relocate?
+                </label>
+                <select id="wd-relocate" 
+                        data-automation-id="selectWidget"
+                        aria-label="Willing to Relocate">
+                    <option value="">Please select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-travel">
+                    Are you willing to travel for business?
+                </label>
+                <select id="wd-travel" 
+                        data-automation-id="selectWidget"
+                        aria-label="Willing to Travel">
+                    <option value="">Please select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="occasionally">Occasionally</option>
+                </select>
+            </div>
+
+            <div class="workday-button-group">
+                <button type="button" 
+                        class="workday-button workday-button-secondary" 
+                        onclick="goToPage(1)">Previous</button>
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        data-automation-id="goToNextStep"
+                        onclick="goToPage(3)">Continue</button>
+            </div>
+        </div>
+
+        <!-- Page 3: Education & Experience -->
+        <div class="workday-section" id="page3">
+            <h2>Education & Experience</h2>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-institution">
+                    Educational Institution
+                </label>
+                <input type="text" 
+                       id="wd-institution" 
+                       data-automation-id="textInput"
+                       aria-label="Educational Institution">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-degree">
+                    Degree Level
+                </label>
+                <select id="wd-degree" 
+                        data-automation-id="selectWidget"
+                        aria-label="Degree Level">
+                    <option value="">Please select</option>
+                    <option value="Bachelors">Bachelor's Degree</option>
+                    <option value="Masters">Master's Degree</option>
+                    <option value="PhD">PhD</option>
+                    <option value="Associate">Associate Degree</option>
+                </select>
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-major">
+                    Field of Study / Major
+                </label>
+                <input type="text" 
+                       id="wd-major" 
+                       data-automation-id="textInput"
+                       aria-label="Field of Study">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-graduation">
+                    Graduation Date (or Expected)
+                </label>
+                <input type="date" 
+                       id="wd-graduation" 
+                       data-automation-id="datePicker"
+                       aria-label="Graduation Date">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-gpa">
+                    GPA / CGPA
+                </label>
+                <input type="text" 
+                       id="wd-gpa" 
+                       data-automation-id="textInput"
+                       aria-label="GPA">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-employer">
+                    Most Recent Employer
+                </label>
+                <input type="text" 
+                       id="wd-employer" 
+                       data-automation-id="textInput"
+                       aria-label="Employer">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-job-title">
+                    Most Recent Job Title
+                </label>
+                <input type="text" 
+                       id="wd-job-title" 
+                       data-automation-id="textInput"
+                       aria-label="Job Title">
+            </div>
+
+            <div class="workday-button-group">
+                <button type="button" 
+                        class="workday-button workday-button-secondary" 
+                        onclick="goToPage(2)">Previous</button>
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        onclick="goToPage(4)">Continue</button>
+            </div>
+        </div>
+
+        <!-- Page 4: Additional Information & Upload -->
+        <div class="workday-section" id="page4">
+            <h2>Additional Information</h2>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-salary-min">
+                    Minimum Salary Expectation (USD/year)
+                </label>
+                <input type="text" 
+                       id="wd-salary-min" 
+                       data-automation-id="textInput"
+                       aria-label="Minimum Salary">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-salary-max">
+                    Maximum Salary Expectation (USD/year)
+                </label>
+                <input type="text" 
+                       id="wd-salary-max" 
+                       data-automation-id="textInput"
+                       aria-label="Maximum Salary">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-hear-about">
+                    How did you hear about this position?
+                </label>
+                <select id="wd-hear-about" 
+                        data-automation-id="selectWidget"
+                        aria-label="How did you hear about us">
+                    <option value="">Please select</option>
+                    <option value="LinkedIn">LinkedIn</option>
+                    <option value="Google">Google</option>
+                    <option value="Twitter">Twitter</option>
+                    <option value="Friend">Friend or Colleague</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-cover-letter">
+                    Cover Letter (Optional)
+                </label>
+                <textarea id="wd-cover-letter" 
+                          data-automation-id="textArea"
+                          aria-label="Cover Letter"
+                          placeholder="Tell us why you're interested in this position..."></textarea>
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label" for="wd-resume">
+                    Upload Resume / CV<span class="required">*</span>
+                </label>
+                <input type="file" 
+                       id="wd-resume" 
+                       data-automation-id="fileUpload"
+                       accept=".pdf,.doc,.docx"
+                       aria-label="Resume Upload">
+            </div>
+
+            <div class="workday-field-group">
+                <label class="workday-field-label">
+                    Have you previously worked for this company?
+                </label>
+                <div class="workday-radio-group">
+                    <div class="workday-radio-item">
+                        <input type="radio" 
+                               id="worked-yes" 
+                               name="workedBefore"
+                               value="yes"
+                               role="radio"
+                               data-automation-id="radio-worked-yes">
+                        <label for="worked-yes">Yes</label>
+                    </div>
+                    <div class="workday-radio-item">
+                        <input type="radio" 
+                               id="worked-no" 
+                               name="workedBefore"
+                               value="no"
+                               role="radio"
+                               data-automation-id="radio-worked-no">
+                        <label for="worked-no">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workday-button-group">
+                <button type="button" 
+                        class="workday-button workday-button-secondary" 
+                        onclick="goToPage(3)">Previous</button>
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        data-automation-id="submitButton"
+                        onclick="submitApplication()">Submit Application</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+
+        function goToPage(pageNum) {
+            // Hide all sections
+            document.querySelectorAll('.workday-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById('page' + pageNum).classList.add('active');
+            currentPage = pageNum;
+
+            // Update progress bar
+            updateProgressBar(pageNum);
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function updateProgressBar(pageNum) {
+            const steps = document.querySelectorAll('.workday-progress-step');
+            steps.forEach((step, index) => {
+                const stepNum = index + 1;
+                step.classList.remove('active', 'completed');
+                
+                if (stepNum < pageNum) {
+                    step.classList.add('completed');
+                } else if (stepNum === pageNum) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function submitApplication() {
+            alert('Workday Test: Application submitted! In a real Workday app, this would process the form.');
+            console.log('Form data would be submitted to Workday backend');
+        }
+
+        // Simulate Workday listbox behavior for selects
+        document.querySelectorAll('[data-automation-id="selectWidget"]').forEach(select => {
+            select.addEventListener('click', function() {
+                // In real Workday, this opens a custom listbox
+                // For testing, we just use native select
+                console.log('Workday select opened:', this.getAttribute('aria-label'));
+            });
+        });
+
+        // Log file uploads
+        document.querySelectorAll('[data-automation-id="fileUpload"]').forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    console.log('File uploaded:', this.files[0].name);
+                    alert('File attached: ' + this.files[0].name);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

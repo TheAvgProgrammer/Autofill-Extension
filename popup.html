@@ -46,6 +46,14 @@
                     <input type="url" id="linkedinUrl" name="linkedinUrl" placeholder="https://linkedin.com/in/yourprofile">
                 </div>
                 <div class="form-group">
+                    <label for="githubUrl">GitHub URL</label>
+                    <input type="url" id="githubUrl" name="githubUrl" placeholder="https://github.com/yourusername">
+                </div>
+                <div class="form-group">
+                    <label for="portfolioUrl">Portfolio / Website URL</label>
+                    <input type="url" id="portfolioUrl" name="portfolioUrl" placeholder="https://yourportfolio.com">
+                </div>
+                <div class="form-group">
                     <label for="usWorkEligible">Are you legally authorized to work in the United States? *</label>
                     <select id="usWorkEligible" name="usWorkEligible" required>
                         <option value="">Please select</option>
@@ -79,6 +87,19 @@
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="travelWilling">Are you willing to travel for business?</label>
+                    <select id="travelWilling" name="travelWilling">
+                        <option value="">Please select</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="occasionally">Occasionally</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Earliest Available Start Date</label>
+                    <input type="date" id="startDate" name="startDate">
                 </div>
                 <div class="form-group">
                     <label for="noticePeriod">What is the availability of notice period</label>
@@ -148,6 +169,10 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="major">Education - Major / Field of Study</label>
+                    <input type="text" id="major" name="major" placeholder="e.g., Computer Science">
+                </div>
+                <div class="form-group">
                     <label for="graduationDate">Education - Graduation Date</label>
                     <input type="text" id="graduationDate" name="graduationDate" placeholder="MM/YYYY or DD/MM/YYYY">
                 </div>
@@ -158,6 +183,18 @@
                 <div class="form-group">
                     <label for="percentage">Education - Percentage (%)</label>
                     <input type="text" id="percentage" name="percentage" placeholder="e.g., 85">
+                </div>
+                <div class="form-group">
+                    <label for="employer">Most Recent Employer</label>
+                    <input type="text" id="employer" name="employer" placeholder="e.g., Tech Company Inc.">
+                </div>
+                <div class="form-group">
+                    <label for="jobTitle">Most Recent Job Title</label>
+                    <input type="text" id="jobTitle" name="jobTitle" placeholder="e.g., Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label for="coverLetter">Cover Letter (Optional)</label>
+                    <textarea id="coverLetter" name="coverLetter" rows="4" placeholder="Brief cover letter or message..."></textarea>
                 </div>
                 <div class="form-group">
                     <label for="race">Race</label>
