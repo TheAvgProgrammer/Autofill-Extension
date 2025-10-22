@@ -722,6 +722,165 @@
         
         return null;
     }
+    
+    // ===== WORKDAY MULTI-PAGE FLOW SUPPORT =====
+    
+    /**
+     * Get session storage key for Workday flow
+     * @returns {string} Storage key
+     */
+    function getWorkdaySessionKey() {
+        const host = window.location.hostname;
+        const path = window.location.pathname;
+        // Try to extract job ID from path or URL
+        const jobIdMatch = path.match(/\/job\/([^\/]+)/i) || path.match(/jobId=([^&]+)/i);
+        const jobId = jobIdMatch ? jobIdMatch[1] : 'default';
+        return `workday_session_${host}_${jobId}`;
+    }
+    
+    /**
+     * Save Workday progress to session storage
+     * @param {Object} data - Progress data
+     */
+    async function saveWorkdayProgress(data) {
+        if (!isWorkdayMode) return;
+        
+        try {
+            const key = getWorkdaySessionKey();
+            await chrome.storage.session.set({ [key]: data });
+            if (WORKDAY_DEBUG) {
+                console.log('Workday progress saved:', key, data);
+            }
+        } catch (e) {
+            console.warn('Failed to save Workday progress:', e);
+        }
+    }
+    
+    /**
+     * Load Workday progress from session storage
+     * @returns {Promise<Object|null>} Progress data
+     */
+    async function loadWorkdayProgress() {
+        if (!isWorkdayMode) return null;
+        
+        try {
+            const key = getWorkdaySessionKey();
+            const result = await chrome.storage.session.get(key);
+            return result[key] || null;
+        } catch (e) {
+            console.warn('Failed to load Workday progress:', e);
+            return null;
+        }
+    }
+    
+    /**
+     * Auto-click continue/next button if found
+     * @returns {Promise<boolean>} Success
+     */
+    async function autoClickContinue() {
+        if (!isWorkdayMode) return false;
+        
+        // Look for continue/next buttons
+        const buttonSelectors = [
+            '[data-automation-id*="continue"]',
+            '[data-automation-id*="goToNextStep"]',
+            '[data-automation-id*="next"]',
+            'button[aria-label*="Continue"]',
+            'button[aria-label*="Next"]'
+        ];
+        
+        for (const selector of buttonSelectors) {
+            const button = document.querySelector(selector);
+            if (button && button.offsetHeight > 0) {
+                // Check if button is enabled
+                if (!button.disabled && !button.getAttribute('aria-disabled')) {
+                    if (WORKDAY_DEBUG) {
+                        console.log('Auto-clicking continue button:', selector);
+                    }
+                    
+                    // Save progress before navigation
+                    await saveWorkdayProgress({
+                        timestamp: Date.now(),
+                        page: window.location.href
+                    });
+                    
+                    button.click();
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Setup MutationObserver for Workday dynamic content
+     */
+    let workdayObserver = null;
+    let observerThrottle = null;
+    
+    function setupWorkdayObserver(profile, resumeFile) {
+        if (!isWorkdayMode || workdayObserver) return;
+        
+        workdayObserver = new MutationObserver((mutations) => {
+            // Throttle to avoid excessive re-runs
+            if (observerThrottle) return;
+            
+            observerThrottle = setTimeout(() => {
+                observerThrottle = null;
+            }, 2000);
+            
+            // Check if new fields appeared
+            const hasNewFields = mutations.some(mutation => {
+                return Array.from(mutation.addedNodes).some(node => {
+                    if (node.nodeType === 1) { // Element node
+                        return node.matches?.('[data-automation-id]') ||
+                               node.querySelector?.('[data-automation-id]');
+                    }
+                    return false;
+                });
+            });
+            
+            if (hasNewFields) {
+                if (WORKDAY_DEBUG) {
+                    console.log('New Workday fields detected, re-running autofill');
+                }
+                
+                // Re-run autofill for new fields
+                setTimeout(() => {
+                    fillWorkdayFields(profile, resumeFile).then(filled => {
+                        if (WORKDAY_DEBUG && filled > 0) {
+                            console.log('Filled', filled, 'new fields');
+                        }
+                    });
+                }, 500);
+            }
+        });
+        
+        // Observe the body for changes
+        workdayObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        if (WORKDAY_DEBUG) {
+            console.log('Workday observer setup complete');
+        }
+    }
+    
+    /**
+     * Cleanup Workday observer
+     */
+    function cleanupWorkdayObserver() {
+        if (workdayObserver) {
+            workdayObserver.disconnect();
+            workdayObserver = null;
+        }
+        if (observerThrottle) {
+            clearTimeout(observerThrottle);
+            observerThrottle = null;
+        }
+    }
 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
@@ -757,6 +916,15 @@
             
             // If Workday mode, try Workday-specific handlers first
             if (isWorkdayMode) {
+                // Setup observer for dynamic content
+                setupWorkdayObserver(profile, resumeFile);
+                
+                // Load any saved progress
+                const progress = await loadWorkdayProgress();
+                if (progress && WORKDAY_DEBUG) {
+                    console.log('Loaded Workday progress:', progress);
+                }
+                
                 fieldsFound += await fillWorkdayFields(profile, resumeFile);
             }
             
