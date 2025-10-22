@@ -36,46 +36,14 @@
                 <button id="deleteProfileBtn" class="btn btn-danger">Delete Profile</button>
             </div>
             
+            <div class="info-text">
+                <p><strong>Note:</strong> This extension no longer manages personal contact or address information (name, email, phone, address, city, state, postal code, country). Chrome's built-in Address Autofill will handle these fields. Simply click or focus on those fields to trigger Chrome's autofill suggestions.</p>
+            </div>
+            
             <form id="profileForm">
-                <div class="form-group">
-                    <label for="firstName">First Name *</label>
-                    <input type="text" id="firstName" name="firstName" required>
-                </div>
-                <div class="form-group">
-                    <label for="lastName">Last Name *</label>
-                    <input type="text" id="lastName" name="lastName" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email Address *</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="countryCode">Country Code *</label>
-                    <input type="text" id="countryCode" name="countryCode" placeholder="+1" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Phone Number *</label>
-                    <input type="tel" id="phone" name="phone" placeholder="5551234567" required>
-                </div>
                 <div class="form-group">
                     <label for="linkedinUrl">LinkedIn URL</label>
                     <input type="url" id="linkedinUrl" name="linkedinUrl" placeholder="https://linkedin.com/in/yourprofile">
-                </div>
-                <div class="form-group">
-                    <label for="country">Country *</label>
-                    <input type="text" id="country" name="country" required>
-                </div>
-                <div class="form-group">
-                    <label for="state">State/Province *</label>
-                    <input type="text" id="state" name="state" required>
-                </div>
-                <div class="form-group">
-                    <label for="city">City *</label>
-                    <input type="text" id="city" name="city" required>
-                </div>
-                <div class="form-group">
-                    <label for="pincode">Pincode/Zipcode *</label>
-                    <input type="text" id="pincode" name="pincode" required>
                 </div>
                 <div class="form-group">
                     <label for="usWorkEligible">Are you legally authorized to work in the United States? *</label>
@@ -245,8 +213,9 @@
                 <div class="help-text">
                     <p><strong>How it works:</strong></p>
                     <ul>
-                        <li>Uses intelligent pattern matching to identify form fields</li>
-                        <li>Matches fields based on names, IDs, labels, and placeholders</li>
+                        <li>Fills job-specific fields: work authorization, visa sponsorship, education, experience, etc.</li>
+                        <li>Personal contact and address fields are handled by Chrome's built-in Address Autofill</li>
+                        <li>Click or focus on name, email, phone, or address fields to trigger Chrome's suggestions</li>
                         <li>Uploads your resume file to file input fields</li>
                         <li>Supports multiple profiles for different job applications</li>
                     </ul>

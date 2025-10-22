@@ -77,55 +77,56 @@
         <h1>Job Application Form</h1>
         
         <div class="note">
-            <p><strong>Test your autofill extension here!</strong> This form contains various common job application fields that should be automatically filled by the extension.</p>
+            <p><strong>Test your autofill extension here!</strong> This form contains various common job application fields.</p>
+            <p><strong>Note:</strong> Personal contact fields (name, email, phone) and address fields (address, city, state, ZIP, country) are now handled by Chrome's built-in Address Autofill. Click on these fields to trigger Chrome's suggestions. The extension will autofill the remaining job-specific fields.</p>
         </div>
 
         <form id="jobApplication">
             <div class="form-row">
                 <div class="form-group">
                     <label for="first_name">First Name *</label>
-                    <input type="text" id="first_name" name="first_name" required>
+                    <input type="text" id="first_name" name="first_name" autocomplete="given-name" required>
                 </div>
                 <div class="form-group">
                     <label for="last_name">Last Name *</label>
-                    <input type="text" id="last_name" name="last_name" required>
+                    <input type="text" id="last_name" name="last_name" autocomplete="family-name" required>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="email_address">Email Address *</label>
-                    <input type="email" id="email_address" name="email" required>
+                    <input type="email" id="email_address" name="email" autocomplete="email" required>
                 </div>
                 <div class="form-group">
                     <label for="phone_number">Phone Number *</label>
-                    <input type="tel" id="phone_number" name="phone" required>
+                    <input type="tel" id="phone_number" name="phone" autocomplete="tel" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="street_address">Street Address</label>
-                <input type="text" id="street_address" name="address" placeholder="Enter your street address">
+                <input type="text" id="street_address" name="address" autocomplete="address-line1" placeholder="Enter your street address">
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="city">City</label>
-                    <input type="text" id="city" name="city">
+                    <input type="text" id="city" name="city" autocomplete="address-level2">
                 </div>
                 <div class="form-group">
                     <label for="state">State/Province</label>
-                    <input type="text" id="state" name="state">
+                    <input type="text" id="state" name="state" autocomplete="address-level1">
                 </div>
                 <div class="form-group">
                     <label for="zip_code">ZIP Code</label>
-                    <input type="text" id="zip_code" name="zipcode">
+                    <input type="text" id="zip_code" name="zipcode" autocomplete="postal-code">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="country">Country</label>
-                <select id="country" name="country">
+                <select id="country" name="country" autocomplete="country">
                     <option value="">Select Country</option>
                     <option value="US">United States</option>
                     <option value="CA">Canada</option>
