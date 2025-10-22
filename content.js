@@ -1,4 +1,186 @@
 (function() {
+    // ===== WORKDAY SUPPORT CONFIGURATION =====
+    
+    // Debug flag for Workday operations
+    const WORKDAY_DEBUG = false;
+    
+    // Workday mode detection
+    let isWorkdayMode = false;
+    
+    // Workday hostname patterns
+    const WORKDAY_HOSTS = [
+        'myworkdayjobs.com',
+        '.myworkdayjobs.com',
+        '.workday.com'
+    ];
+    
+    /**
+     * Detect if current page is a Workday application
+     */
+    function detectWorkdayMode() {
+        const hostname = window.location.hostname.toLowerCase();
+        
+        // Check hostname patterns
+        const isWorkdayHost = WORKDAY_HOSTS.some(pattern => {
+            if (pattern.startsWith('.')) {
+                return hostname.includes(pattern) || hostname.endsWith(pattern.substring(1));
+            }
+            return hostname === pattern || hostname.endsWith('.' + pattern);
+        });
+        
+        if (!isWorkdayHost) {
+            return false;
+        }
+        
+        // Verify Workday page structure
+        const hasWorkdayAttributes = 
+            document.querySelector('[data-automation-id]') !== null ||
+            document.querySelector('[role="listbox"]') !== null ||
+            document.querySelector('[role="option"]') !== null;
+        
+        return hasWorkdayAttributes;
+    }
+    
+    // ===== WORKDAY UTILITY FUNCTIONS =====
+    
+    /**
+     * Wait for an element to appear in the DOM
+     * @param {string} selector - CSS selector or data-automation-id
+     * @param {Object} opts - Options: timeout, parent, visible
+     * @returns {Promise<Element>}
+     */
+    async function waitFor(selector, opts = {}) {
+        const { timeout = 5000, parent = document, visible = false } = opts;
+        const startTime = Date.now();
+        
+        return new Promise((resolve, reject) => {
+            const check = () => {
+                const element = parent.querySelector(selector);
+                if (element) {
+                    if (!visible || (element.offsetWidth > 0 && element.offsetHeight > 0)) {
+                        resolve(element);
+                        return;
+                    }
+                }
+                
+                if (Date.now() - startTime >= timeout) {
+                    reject(new Error(`Timeout waiting for ${selector}`));
+                    return;
+                }
+                
+                setTimeout(check, 100);
+            };
+            check();
+        });
+    }
+    
+    /**
+     * Click element and wait for listbox to appear
+     * @param {Element} element - Element to click
+     * @param {number} timeout - Maximum wait time
+     * @returns {Promise<Element>} Listbox element
+     */
+    async function clickAndWaitListbox(element, timeout = 3000) {
+        element.click();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        try {
+            return await waitFor('[role="listbox"], [role="option"]', { timeout });
+        } catch (e) {
+            if (WORKDAY_DEBUG) console.warn('Listbox did not appear after click');
+            return null;
+        }
+    }
+    
+    /**
+     * Select option by label with normalization
+     * @param {Element} listbox - Listbox or select element
+     * @param {string} value - Value to match
+     * @returns {boolean} Success
+     */
+    function selectOptionByLabel(listbox, value) {
+        if (!listbox || !value) return false;
+        
+        const normalizedValue = value.toLowerCase().trim();
+        const options = listbox.querySelectorAll('[role="option"], option');
+        
+        for (const option of options) {
+            const text = (option.textContent || option.innerText || '').toLowerCase().trim();
+            const optValue = (option.value || '').toLowerCase().trim();
+            
+            if (text === normalizedValue || 
+                optValue === normalizedValue ||
+                text.includes(normalizedValue) ||
+                normalizedValue.includes(text)) {
+                option.click?.();
+                option.selected = true;
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Set input value with proper event dispatching
+     * @param {Element} element - Input element
+     * @param {string} value - Value to set
+     */
+    function setInputValue(element, value) {
+        if (!element) return;
+        
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype, 
+            'value'
+        )?.set;
+        
+        if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(element, value);
+        } else {
+            element.value = value;
+        }
+        
+        // Dispatch events
+        ['input', 'change', 'blur'].forEach(eventType => {
+            element.dispatchEvent(new Event(eventType, { bubbles: true }));
+        });
+    }
+    
+    /**
+     * Wait for file upload to complete
+     * @param {Element} fileInput - File input element
+     * @param {number} timeout - Maximum wait time
+     * @returns {Promise<boolean>}
+     */
+    async function waitForUploadComplete(fileInput, timeout = 5000) {
+        const startTime = Date.now();
+        
+        return new Promise((resolve) => {
+            const check = () => {
+                // Look for completion indicators
+                const hasFile = fileInput.files && fileInput.files.length > 0;
+                const container = fileInput.closest('[data-automation-id]');
+                const hasBadge = container?.querySelector('[data-automation-id*="badge"], .filename, [data-automation-id*="file"]');
+                const hasProgress = container?.querySelector('[data-automation-id*="progress"]');
+                const progressComplete = hasProgress ? 
+                    hasProgress.getAttribute('aria-valuenow') === '100' : true;
+                
+                if (hasFile && (hasBadge || progressComplete)) {
+                    resolve(true);
+                    return;
+                }
+                
+                if (Date.now() - startTime >= timeout) {
+                    resolve(hasFile);
+                    return;
+                }
+                
+                setTimeout(check, 200);
+            };
+            check();
+        });
+    }
+    
     // Fields that should be skipped and deferred to Chrome's native autofill
     const SKIP_FIELDS = ['firstName', 'lastName', 'fullName', 'email', 'phone', 'countryCode', 'country', 'state', 'city', 'pincode'];
     
@@ -138,6 +320,38 @@
         noticePeriod: {
             priority: ['notice_period', 'noticeperiod', 'notice', 'availability', 'available', 'joining_date', 'join_date', 'start_date', 'when_available', 'notice-period', 'joining-date'],
             keywords: ['notice', 'period', 'availability', 'available', 'joining', 'join', 'start', 'when', 'weeks', 'immediately']
+        },
+        githubUrl: {
+            priority: ['github', 'github_url', 'githuburl', 'github_profile', 'github_link'],
+            keywords: ['github', 'git', 'repository', 'repo', 'code', 'portfolio']
+        },
+        portfolioUrl: {
+            priority: ['portfolio', 'portfolio_url', 'portfoliourl', 'website', 'personal_site', 'personal_website'],
+            keywords: ['portfolio', 'website', 'site', 'personal', 'web']
+        },
+        travelWilling: {
+            priority: ['travel', 'travel_willing', 'willing_travel', 'business_travel', 'travel_required'],
+            keywords: ['travel', 'willing', 'business', 'trip', 'percentage']
+        },
+        startDate: {
+            priority: ['start_date', 'startdate', 'available_start', 'earliest_start', 'join_date', 'start-date'],
+            keywords: ['start', 'date', 'available', 'earliest', 'begin', 'commence']
+        },
+        coverLetter: {
+            priority: ['cover_letter', 'coverletter', 'cover', 'letter', 'additional_information', 'message'],
+            keywords: ['cover', 'letter', 'message', 'additional', 'why', 'interest']
+        },
+        major: {
+            priority: ['major', 'field_of_study', 'field', 'study', 'discipline', 'specialization'],
+            keywords: ['major', 'field', 'study', 'discipline', 'specialization', 'subject']
+        },
+        employer: {
+            priority: ['employer', 'company', 'organization', 'company_name', 'employer_name'],
+            keywords: ['employer', 'company', 'organization', 'firm', 'business']
+        },
+        jobTitle: {
+            priority: ['job_title', 'title', 'position', 'role', 'job_position'],
+            keywords: ['title', 'position', 'role', 'job', 'designation']
         }
     };
 
@@ -164,26 +378,390 @@
             console.log(`[Autofill Extension] Set autocomplete attributes on ${attributesSet} contact/address fields for Chrome's native autofill`);
         }
     }
+    
+    // ===== WORKDAY WIDGET HANDLERS =====
+    
+    /**
+     * Handle Workday text input fields
+     * @param {Element} element - Input element with data-automation-id="textInput"
+     * @param {string} value - Value to set
+     * @returns {boolean} Success
+     */
+    async function handleWorkdayTextInput(element, value) {
+        if (!element) return false;
+        
+        setInputValue(element, value);
+        
+        // Give time for validation
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return true;
+    }
+    
+    /**
+     * Handle Workday combo box / select widget
+     * @param {Element} element - Element with data-automation-id containing "select", "combo", etc.
+     * @param {string} value - Value to match
+     * @returns {boolean} Success
+     */
+    async function handleWorkdayComboBox(element, value) {
+        if (!element || !value) return false;
+        
+        try {
+            // Click to open listbox
+            const listbox = await clickAndWaitListbox(element, 2000);
+            
+            if (listbox) {
+                // Try to select by label
+                const selected = selectOptionByLabel(listbox, value);
+                if (selected) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    return true;
+                }
+            }
+            
+            // Fallback: try keyboard selection
+            element.focus();
+            setInputValue(element, value);
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Try Enter key
+            element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            return true;
+        } catch (e) {
+            if (WORKDAY_DEBUG) console.warn('Workday combo box fill failed:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * Handle Workday multi-select token input
+     * @param {Element} element - Element with data-automation-id="tokenInput" or "multiSelectInput"
+     * @param {string|Array} values - Value(s) to select
+     * @returns {boolean} Success
+     */
+    async function handleWorkdayMultiSelect(element, values) {
+        if (!element) return false;
+        
+        const valueArray = Array.isArray(values) ? values : [values];
+        let successCount = 0;
+        
+        try {
+            for (const value of valueArray) {
+                // Type query
+                element.focus();
+                setInputValue(element, value);
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Wait for dropdown
+                const listbox = await waitFor('[role="option"], [data-automation-id="listItem"]', { 
+                    timeout: 2000 
+                }).catch(() => null);
+                
+                if (listbox) {
+                    const selected = selectOptionByLabel(listbox, value);
+                    if (selected) {
+                        successCount++;
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
+                        // Verify chip/token rendered
+                        const container = element.closest('[data-automation-id]');
+                        const hasToken = container?.querySelector('[data-automation-id*="token"], .chip');
+                        if (WORKDAY_DEBUG && hasToken) {
+                            console.log('Token rendered for:', value);
+                        }
+                    }
+                }
+            }
+            
+            return successCount > 0;
+        } catch (e) {
+            if (WORKDAY_DEBUG) console.warn('Workday multi-select fill failed:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * Handle Workday date picker
+     * @param {Element} element - Element with data-automation-id="datePicker"
+     * @param {string} value - Date value (yyyy-MM-dd or other format)
+     * @returns {boolean} Success
+     */
+    async function handleWorkdayDatePicker(element, value) {
+        if (!element || !value) return false;
+        
+        try {
+            // Try direct value set first (yyyy-MM-dd)
+            const dateStr = formatDateForWorkday(value);
+            setInputValue(element, dateStr);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check if value stuck
+            if (element.value && element.value.includes(dateStr.split('-')[0])) {
+                return true;
+            }
+            
+            // Fallback: open calendar and select
+            // This is complex and varies by implementation, so we'll skip for now
+            if (WORKDAY_DEBUG) {
+                console.log('Direct date input worked or calendar needed');
+            }
+            
+            return element.value.length > 0;
+        } catch (e) {
+            if (WORKDAY_DEBUG) console.warn('Workday date picker fill failed:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * Format date for Workday (yyyy-MM-dd)
+     */
+    function formatDateForWorkday(value) {
+        if (!value) return '';
+        
+        // If already in yyyy-MM-dd format
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return value;
+        }
+        
+        // Try to parse common formats
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        return value;
+    }
+    
+    /**
+     * Handle Workday radio/checkbox groups
+     * @param {Element} element - Radio or checkbox with role="radio" or role="checkbox"
+     * @param {string} value - Value to match
+     * @returns {boolean} Success
+     */
+    async function handleWorkdayRadioCheckbox(element, value) {
+        if (!element || !value) return false;
+        
+        try {
+            const role = element.getAttribute('role');
+            const name = element.getAttribute('name') || element.getAttribute('aria-label');
+            
+            // Find all options in the group
+            let options = [];
+            if (role === 'radio' || role === 'checkbox') {
+                const container = element.closest('[data-automation-id], fieldset, [role="radiogroup"]');
+                options = container ? 
+                    Array.from(container.querySelectorAll(`[role="${role}"]`)) : 
+                    [element];
+            }
+            
+            const normalizedValue = value.toLowerCase().trim();
+            
+            for (const option of options) {
+                const label = option.getAttribute('aria-label') || 
+                             option.textContent || 
+                             findAssociatedLabel(option);
+                const optValue = option.getAttribute('value') || '';
+                
+                if (label.toLowerCase().includes(normalizedValue) ||
+                    optValue.toLowerCase().includes(normalizedValue) ||
+                    normalizedValue.includes(label.toLowerCase())) {
+                    option.click();
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (e) {
+            if (WORKDAY_DEBUG) console.warn('Workday radio/checkbox fill failed:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * Handle Workday file upload
+     * @param {Element} element - File input with data-automation-id="fileUpload"
+     * @param {Object} resumeFile - Resume file object
+     * @returns {boolean} Success
+     */
+    async function handleWorkdayFileUpload(element, resumeFile) {
+        if (!element || !resumeFile || !resumeFile.data) return false;
+        
+        try {
+            const base64Data = resumeFile.data.split(',')[1];
+            const binary = atob(base64Data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            
+            const fileObj = new File([bytes], resumeFile.name, { type: resumeFile.type });
+            const dt = new DataTransfer();
+            dt.items.add(fileObj);
+            element.files = dt.files;
+            
+            // Dispatch change event
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Wait for upload completion
+            const completed = await waitForUploadComplete(element, 5000);
+            
+            if (WORKDAY_DEBUG) {
+                console.log('File upload completed:', completed);
+            }
+            
+            return completed;
+        } catch (e) {
+            if (WORKDAY_DEBUG) console.warn('Workday file upload failed:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * Detect and fill Workday-specific widgets
+     * @param {Object} profile - User profile
+     * @param {Object} resumeFile - Resume file
+     * @returns {number} Fields filled
+     */
+    async function fillWorkdayFields(profile, resumeFile) {
+        let filled = 0;
+        
+        if (!isWorkdayMode) return filled;
+        
+        // Text inputs
+        const textInputs = document.querySelectorAll('[data-automation-id="textInput"]');
+        for (const input of textInputs) {
+            const label = findAssociatedLabel(input) || input.getAttribute('aria-label') || '';
+            const matchedKey = findProfileKeyForLabel(label);
+            
+            if (matchedKey && profile[matchedKey] && !SKIP_FIELDS.includes(matchedKey)) {
+                const success = await handleWorkdayTextInput(input, String(profile[matchedKey]));
+                if (success) filled++;
+            }
+        }
+        
+        // Combo boxes / selects
+        const selects = document.querySelectorAll(
+            '[data-automation-id*="select"], [data-automation-id*="combo"], [data-automation-id="selectWidget"]'
+        );
+        for (const select of selects) {
+            const label = findAssociatedLabel(select) || select.getAttribute('aria-label') || '';
+            const matchedKey = findProfileKeyForLabel(label);
+            
+            if (matchedKey && profile[matchedKey] && !SKIP_FIELDS.includes(matchedKey)) {
+                const success = await handleWorkdayComboBox(select, String(profile[matchedKey]));
+                if (success) filled++;
+            }
+        }
+        
+        // Date pickers
+        const datePickers = document.querySelectorAll('[data-automation-id="datePicker"]');
+        for (const picker of datePickers) {
+            const label = findAssociatedLabel(picker) || picker.getAttribute('aria-label') || '';
+            const matchedKey = findProfileKeyForLabel(label);
+            
+            if (matchedKey && profile[matchedKey]) {
+                const success = await handleWorkdayDatePicker(picker, String(profile[matchedKey]));
+                if (success) filled++;
+            }
+        }
+        
+        // File uploads
+        const fileUploads = document.querySelectorAll('[data-automation-id="fileUpload"], input[type="file"][data-automation-id]');
+        for (const upload of fileUploads) {
+            const label = (findAssociatedLabel(upload) || upload.getAttribute('aria-label') || '').toLowerCase();
+            // Only fill resume/CV fields, not cover letter or other uploads
+            if ((label.includes('resume') || label.includes('cv')) && resumeFile) {
+                const success = await handleWorkdayFileUpload(upload, resumeFile);
+                if (success) filled++;
+            }
+        }
+        
+        return filled;
+    }
+    
+    /**
+     * Find profile key that matches a label
+     * @param {string} label - Field label
+     * @returns {string|null} Profile key
+     */
+    function findProfileKeyForLabel(label) {
+        if (!label) return null;
+        
+        const normalized = label.toLowerCase().trim();
+        
+        // Try to match against field mappings
+        for (const [key, mapping] of Object.entries(FIELD_MAPPINGS)) {
+            if (SKIP_FIELDS.includes(key)) continue;
+            
+            // Check priority keywords
+            for (const priority of mapping.priority) {
+                if (normalized.includes(priority)) {
+                    return key;
+                }
+            }
+            
+            // Check general keywords
+            let matchCount = 0;
+            for (const keyword of mapping.keywords) {
+                if (normalized.includes(keyword)) {
+                    matchCount++;
+                }
+            }
+            
+            if (matchCount >= 2) {
+                return key;
+            }
+        }
+        
+        return null;
+    }
 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
+            // Detect Workday mode
+            isWorkdayMode = detectWorkdayMode();
+            
+            if (isWorkdayMode) {
+                console.log('[Autofill Extension] Workday mode detected - using optimized handlers');
+            }
+            
             // First, set autocomplete attributes to help Chrome's autofill
             setAutocompleteAttributes();
             
             // Log that personal/contact fields are deferred to browser
             console.log('[Autofill Extension] Personal contact and address fields (name, email, phone, address, city, state, postal code, country) are deferred to Chrome\'s Address Autofill. Focus on these fields to trigger browser suggestions.');
             
-            // Use regex-based autofill for remaining fields
-            const result = performAutofill(request.profile, request.resumeFile);
-            sendResponse(result);
+            // Use appropriate autofill method
+            performAutofill(request.profile, request.resumeFile).then(result => {
+                sendResponse(result);
+            }).catch(error => {
+                sendResponse({
+                    success: false,
+                    error: error.message
+                });
+            });
         }
-        return true;
+        return true; // Keep channel open for async response
     });
 
-    function performAutofill(profile, resumeFile) {
+    async function performAutofill(profile, resumeFile) {
         try {
-            const formFields = findFormFields();
             let fieldsFound = 0;
+            
+            // If Workday mode, try Workday-specific handlers first
+            if (isWorkdayMode) {
+                fieldsFound += await fillWorkdayFields(profile, resumeFile);
+            }
+            
+            // Standard autofill for remaining fields
+            const formFields = findFormFields();
 
             fieldsFound += attachResumeToInputs(resumeFile);
 
@@ -239,7 +817,8 @@
             return {
                 success: true,
                 fieldsFound: fieldsFound,
-                totalFields: formFields.length
+                totalFields: formFields.length,
+                workdayMode: isWorkdayMode
             };
         } catch (error) {
             console.error('Autofill error:', error);
