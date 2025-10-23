@@ -16,6 +16,13 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"]
+    },
+    {
+      "matches": [
+        "*://*.myworkdayjobs.com/*",
+        "*://*.workday.com/*"
+      ],
+      "js": ["workday-dynamic.js"]
     }
   ],
   "icons": {

@@ -997,6 +997,9 @@
         }
     }
 
+    // Expose performAutofill for workday-dynamic.js
+    window.performAutofill = performAutofill;
+
 
 
 function attachResumeToInputs(resumeFile) {

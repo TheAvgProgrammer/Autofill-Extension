@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workday Dynamic Add Sections Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .workday-container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .workday-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .workday-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .workday-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .workday-section h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .workday-field-group {
+            margin-bottom: 16px;
+        }
+        .workday-field-label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        .workday-button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .workday-button-primary {
+            background-color: #0073e6;
+            color: white;
+        }
+        .workday-button-primary:hover {
+            background-color: #005bb5;
+        }
+        .workday-button-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            margin-left: 10px;
+        }
+        .workday-button-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        .experience-entry,
+        .education-entry {
+            padding: 20px;
+            margin-bottom: 16px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            position: relative;
+        }
+        .remove-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .remove-button:hover {
+            background-color: #b71c1c;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            color: #1565c0;
+            font-size: 14px;
+        }
+        .section-buttons {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="workday-container">
+        <div class="workday-header">
+            <h1>Software Engineer Application</h1>
+            <p class="subtitle">Test Dynamic Add Sections</p>
+        </div>
+
+        <div class="info-box">
+            <p><strong>⚠️ Workday Dynamic Test:</strong> This page simulates Workday's dynamic "Add" sections. Click the "Add Work Experience" or "Add Education" buttons to inject new form fields. The extension should automatically detect and fill these new fields.</p>
+        </div>
+
+        <!-- Work Experience Section -->
+        <div class="workday-section" id="experience-section">
+            <h2>Work Experience</h2>
+            <div id="experience-list">
+                <!-- Initial entry will be here -->
+            </div>
+            <div class="section-buttons">
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        data-automation-id="addExperienceButton"
+                        onclick="addWorkExperience()">
+                    Add Work Experience
+                </button>
+            </div>
+        </div>
+
+        <!-- Education Section -->
+        <div class="workday-section" id="education-section">
+            <h2>Education</h2>
+            <div id="education-list">
+                <!-- Initial entry will be here -->
+            </div>
+            <div class="section-buttons">
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        data-automation-id="addEducationButton"
+                        onclick="addEducation()">
+                    Add Education
+                </button>
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="section-buttons">
+            <button type="button" class="workday-button workday-button-primary" onclick="submitForm()">
+                Submit Application
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let experienceCount = 0;
+        let educationCount = 0;
+
+        function addWorkExperience() {
+            experienceCount++;
+            const list = document.getElementById('experience-list');
+            
+            const entry = document.createElement('div');
+            entry.className = 'experience-entry';
+            entry.id = `experience-${experienceCount}`;
+            entry.setAttribute('data-automation-id', `experienceEntry-${experienceCount}`);
+            
+            entry.innerHTML = `
+                <button type="button" class="remove-button" onclick="removeEntry('experience-${experienceCount}')">Remove</button>
+                
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="exp-company-${experienceCount}">
+                        Company Name<span style="color: #d32f2f;">*</span>
+                    </label>
+                    <input type="text" 
+                           id="exp-company-${experienceCount}" 
+                           name="company_${experienceCount}"
+                           data-automation-id="textInput"
+                           aria-label="Company Name">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="exp-title-${experienceCount}">
+                        Job Title<span style="color: #d32f2f;">*</span>
+                    </label>
+                    <input type="text" 
+                           id="exp-title-${experienceCount}" 
+                           name="job_title_${experienceCount}"
+                           data-automation-id="textInput"
+                           aria-label="Job Title">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label">
+                        <input type="checkbox" 
+                               id="exp-current-${experienceCount}" 
+                               name="current_${experienceCount}"
+                               data-automation-id="checkbox"
+                               aria-label="Currently Working Here">
+                        Currently working here
+                    </label>
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="exp-start-${experienceCount}">
+                        Start Date
+                    </label>
+                    <input type="date" 
+                           id="exp-start-${experienceCount}" 
+                           name="start_date_${experienceCount}"
+                           data-automation-id="datePicker"
+                           aria-label="Start Date">
+                </div>
+
+                <div class="workday-field-group" id="exp-end-group-${experienceCount}">
+                    <label class="workday-field-label" for="exp-end-${experienceCount}">
+                        End Date
+                    </label>
+                    <input type="date" 
+                           id="exp-end-${experienceCount}" 
+                           name="end_date_${experienceCount}"
+                           data-automation-id="datePicker"
+                           aria-label="End Date">
+                </div>
+            `;
+            
+            // Simulate Workday's delayed rendering
+            setTimeout(() => {
+                list.appendChild(entry);
+                console.log('[Test Page] Work Experience entry added:', entry);
+            }, 100);
+
+            // Handle current checkbox toggle
+            setTimeout(() => {
+                const checkbox = document.getElementById(`exp-current-${experienceCount}`);
+                const endGroup = document.getElementById(`exp-end-group-${experienceCount}`);
+                
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        endGroup.style.display = 'none';
+                    } else {
+                        endGroup.style.display = 'block';
+                    }
+                });
+            }, 200);
+        }
+
+        function addEducation() {
+            educationCount++;
+            const list = document.getElementById('education-list');
+            
+            const entry = document.createElement('div');
+            entry.className = 'education-entry';
+            entry.id = `education-${educationCount}`;
+            entry.setAttribute('data-automation-id', `educationEntry-${educationCount}`);
+            
+            entry.innerHTML = `
+                <button type="button" class="remove-button" onclick="removeEntry('education-${educationCount}')">Remove</button>
+                
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-institution-${educationCount}">
+                        Educational Institution<span style="color: #d32f2f;">*</span>
+                    </label>
+                    <input type="text" 
+                           id="edu-institution-${educationCount}" 
+                           name="institution_${educationCount}"
+                           data-automation-id="textInput"
+                           aria-label="Educational Institution">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-degree-${educationCount}">
+                        Degree Level
+                    </label>
+                    <select id="edu-degree-${educationCount}" 
+                            name="degree_${educationCount}"
+                            data-automation-id="selectWidget"
+                            aria-label="Degree Level">
+                        <option value="">Please select</option>
+                        <option value="Bachelors">Bachelor's Degree</option>
+                        <option value="Masters">Master's Degree</option>
+                        <option value="PhD">PhD</option>
+                        <option value="Associate">Associate Degree</option>
+                    </select>
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-major-${educationCount}">
+                        Field of Study / Major
+                    </label>
+                    <input type="text" 
+                           id="edu-major-${educationCount}" 
+                           name="major_${educationCount}"
+                           data-automation-id="textInput"
+                           aria-label="Field of Study">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-graduation-${educationCount}">
+                        Graduation Date
+                    </label>
+                    <input type="date" 
+                           id="edu-graduation-${educationCount}" 
+                           name="graduation_${educationCount}"
+                           data-automation-id="datePicker"
+                           aria-label="Graduation Date">
+                </div>
+            `;
+            
+            // Simulate Workday's delayed rendering
+            setTimeout(() => {
+                list.appendChild(entry);
+                console.log('[Test Page] Education entry added:', entry);
+            }, 100);
+        }
+
+        function removeEntry(entryId) {
+            const entry = document.getElementById(entryId);
+            if (entry) {
+                entry.remove();
+                console.log('[Test Page] Entry removed:', entryId);
+            }
+        }
+
+        function submitForm() {
+            alert('Workday Dynamic Test: Form would be submitted. Check console for field values.');
+            
+            // Log all form data
+            console.log('=== Work Experience Entries ===');
+            for (let i = 1; i <= experienceCount; i++) {
+                const entry = document.getElementById(`experience-${i}`);
+                if (entry) {
+                    console.log(`Experience ${i}:`);
+                    console.log('  Company:', document.getElementById(`exp-company-${i}`)?.value);
+                    console.log('  Title:', document.getElementById(`exp-title-${i}`)?.value);
+                    console.log('  Current:', document.getElementById(`exp-current-${i}`)?.checked);
+                    console.log('  Start:', document.getElementById(`exp-start-${i}`)?.value);
+                    console.log('  End:', document.getElementById(`exp-end-${i}`)?.value);
+                }
+            }
+            
+            console.log('=== Education Entries ===');
+            for (let i = 1; i <= educationCount; i++) {
+                const entry = document.getElementById(`education-${i}`);
+                if (entry) {
+                    console.log(`Education ${i}:`);
+                    console.log('  Institution:', document.getElementById(`edu-institution-${i}`)?.value);
+                    console.log('  Degree:', document.getElementById(`edu-degree-${i}`)?.value);
+                    console.log('  Major:', document.getElementById(`edu-major-${i}`)?.value);
+                    console.log('  Graduation:', document.getElementById(`edu-graduation-${i}`)?.value);
+                }
+            }
+        }
+
+        // Add initial entries on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('[Test Page] Workday Dynamic Add Sections test page loaded');
+            console.log('[Test Page] Hostname:', window.location.hostname);
+            console.log('[Test Page] Click "Add Work Experience" or "Add Education" to test dynamic fields');
+        });
+    </script>
+</body>
+</html>
