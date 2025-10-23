@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workday Dynamic Add Sections Test (Standalone)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .workday-container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .workday-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .workday-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .workday-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .workday-section h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .workday-field-group {
+            margin-bottom: 16px;
+        }
+        .workday-field-label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        .workday-button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .workday-button-primary {
+            background-color: #0073e6;
+            color: white;
+        }
+        .workday-button-primary:hover {
+            background-color: #005bb5;
+        }
+        .workday-button-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            margin-left: 10px;
+        }
+        .workday-button-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        .experience-entry,
+        .education-entry {
+            padding: 20px;
+            margin-bottom: 16px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .remove-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .remove-button:hover {
+            background-color: #b71c1c;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            color: #1565c0;
+            font-size: 14px;
+        }
+        .section-buttons {
+            margin-top: 20px;
+        }
+        .test-controls {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+        .test-controls h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .test-controls button {
+            margin: 5px;
+        }
+        .filled-field {
+            background-color: #d4edda !important;
+            border-color: #28a745 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="workday-container">
+        <div class="workday-header">
+            <h1>Software Engineer Application</h1>
+            <p class="subtitle">Test Dynamic Add Sections (Standalone)</p>
+        </div>
+
+        <div class="info-box">
+            <p><strong>⚠️ Workday Dynamic Test:</strong> This page simulates Workday's dynamic "Add" sections. This is a standalone test that includes the autofill logic inline for easy testing without loading the extension.</p>
+        </div>
+
+        <div class="test-controls">
+            <h3>Test Controls</h3>
+            <p>1. Click "Add Work Experience" or "Add Education" to inject new fields</p>
+            <p>2. Click "Simulate Autofill" to test the dynamic field detection and filling</p>
+            <button type="button" class="workday-button workday-button-primary" onclick="simulateAutofill()">
+                Simulate Autofill (Test Mock Data)
+            </button>
+            <button type="button" class="workday-button workday-button-secondary" onclick="clearAllFields()">
+                Clear All Fields
+            </button>
+        </div>
+
+        <!-- Work Experience Section -->
+        <div class="workday-section" id="experience-section">
+            <h2>Work Experience</h2>
+            <div id="experience-list">
+                <!-- Entries will be added here -->
+            </div>
+            <div class="section-buttons">
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        data-automation-id="addExperienceButton"
+                        onclick="addWorkExperience()">
+                    Add Work Experience
+                </button>
+            </div>
+        </div>
+
+        <!-- Education Section -->
+        <div class="workday-section" id="education-section">
+            <h2>Education</h2>
+            <div id="education-list">
+                <!-- Entries will be added here -->
+            </div>
+            <div class="section-buttons">
+                <button type="button" 
+                        class="workday-button workday-button-primary" 
+                        data-automation-id="addEducationButton"
+                        onclick="addEducation()">
+                    Add Education
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" style="margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-radius: 4px; display: none;">
+            <h3>Autofill Results</h3>
+            <div id="results-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock profile data for testing
+        const mockProfile = {
+            employer: 'Tech Corp International',
+            jobTitle: 'Senior Software Engineer',
+            employmentStartDate: '2020-01-15',
+            employmentEndDate: '', // Leave blank for current
+            institution: 'Stanford University',
+            degreeType: 'Masters',
+            major: 'Computer Science',
+            graduationDate: '2019-05-20'
+        };
+
+        let experienceCount = 0;
+        let educationCount = 0;
+
+        function addWorkExperience() {
+            experienceCount++;
+            const list = document.getElementById('experience-list');
+            
+            const entry = document.createElement('div');
+            entry.className = 'experience-entry';
+            entry.id = `experience-${experienceCount}`;
+            entry.setAttribute('data-automation-id', `experienceEntry-${experienceCount}`);
+            
+            entry.innerHTML = `
+                <button type="button" class="remove-button" onclick="removeEntry('experience-${experienceCount}')">Remove</button>
+                
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="exp-company-${experienceCount}">
+                        Company Name<span style="color: #d32f2f;">*</span>
+                    </label>
+                    <input type="text" 
+                           id="exp-company-${experienceCount}" 
+                           name="company_${experienceCount}"
+                           data-automation-id="textInput"
+                           aria-label="Company Name">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="exp-title-${experienceCount}">
+                        Job Title<span style="color: #d32f2f;">*</span>
+                    </label>
+                    <input type="text" 
+                           id="exp-title-${experienceCount}" 
+                           name="job_title_${experienceCount}"
+                           data-automation-id="textInput"
+                           aria-label="Job Title">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label">
+                        <input type="checkbox" 
+                               id="exp-current-${experienceCount}" 
+                               name="current_${experienceCount}"
+                               data-automation-id="checkbox"
+                               aria-label="Currently Working Here">
+                        Currently working here
+                    </label>
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="exp-start-${experienceCount}">
+                        Start Date
+                    </label>
+                    <input type="date" 
+                           id="exp-start-${experienceCount}" 
+                           name="start_date_${experienceCount}"
+                           data-automation-id="datePicker"
+                           aria-label="Start Date">
+                </div>
+
+                <div class="workday-field-group" id="exp-end-group-${experienceCount}">
+                    <label class="workday-field-label" for="exp-end-${experienceCount}">
+                        End Date
+                    </label>
+                    <input type="date" 
+                           id="exp-end-${experienceCount}" 
+                           name="end_date_${experienceCount}"
+                           data-automation-id="datePicker"
+                           aria-label="End Date">
+                </div>
+            `;
+            
+            // Simulate Workday's delayed rendering
+            setTimeout(() => {
+                list.appendChild(entry);
+                console.log('[Test] Work Experience entry added:', entry);
+                
+                // Trigger MutationObserver event
+                const event = new CustomEvent('workdayFieldsAdded', { 
+                    detail: { 
+                        type: 'experience', 
+                        container: entry 
+                    } 
+                });
+                document.dispatchEvent(event);
+            }, 100);
+
+            // Handle current checkbox toggle
+            setTimeout(() => {
+                const checkbox = document.getElementById(`exp-current-${experienceCount}`);
+                const endGroup = document.getElementById(`exp-end-group-${experienceCount}`);
+                
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        endGroup.style.display = 'none';
+                    } else {
+                        endGroup.style.display = 'block';
+                    }
+                });
+            }, 200);
+        }
+
+        function addEducation() {
+            educationCount++;
+            const list = document.getElementById('education-list');
+            
+            const entry = document.createElement('div');
+            entry.className = 'education-entry';
+            entry.id = `education-${educationCount}`;
+            entry.setAttribute('data-automation-id', `educationEntry-${educationCount}`);
+            
+            entry.innerHTML = `
+                <button type="button" class="remove-button" onclick="removeEntry('education-${educationCount}')">Remove</button>
+                
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-institution-${educationCount}">
+                        Educational Institution<span style="color: #d32f2f;">*</span>
+                    </label>
+                    <input type="text" 
+                           id="edu-institution-${educationCount}" 
+                           name="institution_${educationCount}"
+                           data-automation-id="textInput"
+                           aria-label="Educational Institution">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-degree-${educationCount}">
+                        Degree Level
+                    </label>
+                    <select id="edu-degree-${educationCount}" 
+                            name="degree_${educationCount}"
+                            data-automation-id="selectWidget"
+                            aria-label="Degree Level">
+                        <option value="">Please select</option>
+                        <option value="Bachelors">Bachelor's Degree</option>
+                        <option value="Masters">Master's Degree</option>
+                        <option value="PhD">PhD</option>
+                        <option value="Associate">Associate Degree</option>
+                    </select>
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-major-${educationCount}">
+                        Field of Study / Major
+                    </label>
+                    <input type="text" 
+                           id="edu-major-${educationCount}" 
+                           name="major_${educationCount}"
+                           data-automation-id="textInput"
+                           aria-label="Field of Study">
+                </div>
+
+                <div class="workday-field-group">
+                    <label class="workday-field-label" for="edu-graduation-${educationCount}">
+                        Graduation Date
+                    </label>
+                    <input type="date" 
+                           id="edu-graduation-${educationCount}" 
+                           name="graduation_${educationCount}"
+                           data-automation-id="datePicker"
+                           aria-label="Graduation Date">
+                </div>
+            `;
+            
+            // Simulate Workday's delayed rendering
+            setTimeout(() => {
+                list.appendChild(entry);
+                console.log('[Test] Education entry added:', entry);
+                
+                // Trigger custom event
+                const event = new CustomEvent('workdayFieldsAdded', { 
+                    detail: { 
+                        type: 'education', 
+                        container: entry 
+                    } 
+                });
+                document.dispatchEvent(event);
+            }, 100);
+        }
+
+        function removeEntry(entryId) {
+            const entry = document.getElementById(entryId);
+            if (entry) {
+                entry.remove();
+                console.log('[Test] Entry removed:', entryId);
+            }
+        }
+
+        function clearAllFields() {
+            document.querySelectorAll('input[type="text"], input[type="date"], select').forEach(el => {
+                el.value = '';
+                el.classList.remove('filled-field');
+            });
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                el.checked = false;
+            });
+            console.log('[Test] All fields cleared');
+        }
+
+        // Simulate autofill functionality
+        async function simulateAutofill() {
+            console.log('[Test] Starting autofill simulation...');
+            
+            const results = {
+                experience: 0,
+                education: 0
+            };
+
+            // Fill all work experience entries
+            const expEntries = document.querySelectorAll('.experience-entry');
+            for (const entry of expEntries) {
+                const filled = await fillWorkExperience(entry, mockProfile);
+                results.experience += filled;
+            }
+
+            // Fill all education entries
+            const eduEntries = document.querySelectorAll('.education-entry');
+            for (const entry of eduEntries) {
+                const filled = await fillEducation(entry, mockProfile);
+                results.education += filled;
+            }
+
+            // Display results
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            resultsContent.innerHTML = `
+                <p><strong>Work Experience Fields Filled:</strong> ${results.experience}</p>
+                <p><strong>Education Fields Filled:</strong> ${results.education}</p>
+                <p><strong>Total Fields Filled:</strong> ${results.experience + results.education}</p>
+            `;
+            resultsDiv.style.display = 'block';
+
+            console.log('[Test] Autofill complete:', results);
+        }
+
+        async function fillWorkExperience(container, profile) {
+            let filled = 0;
+            
+            // Fill company
+            const company = findFieldInContainer(container, ['company', 'employer']);
+            if (company && profile.employer) {
+                await fillField(company, profile.employer);
+                filled++;
+            }
+
+            // Fill job title
+            const title = findFieldInContainer(container, ['title', 'position', 'role', 'job']);
+            if (title && profile.jobTitle) {
+                await fillField(title, profile.jobTitle);
+                filled++;
+            }
+
+            // Fill current checkbox
+            const current = findFieldInContainer(container, ['current', 'present']);
+            if (current) {
+                const isCurrent = !profile.employmentEndDate;
+                current.checked = isCurrent;
+                current.dispatchEvent(new Event('change', { bubbles: true }));
+                filled++;
+            }
+
+            // Fill start date
+            const startDate = findFieldInContainer(container, ['start', 'from', 'begin']);
+            if (startDate && profile.employmentStartDate) {
+                await fillField(startDate, profile.employmentStartDate);
+                filled++;
+            }
+
+            // Fill end date (only if not current)
+            if (!profile.employmentEndDate || profile.employmentEndDate === '') {
+                // Hide end date field if currently employed
+                const endGroup = container.querySelector('[id*="end-group"]');
+                if (endGroup) endGroup.style.display = 'none';
+            } else {
+                const endDate = findFieldInContainer(container, ['end', 'to', 'until']);
+                if (endDate) {
+                    await fillField(endDate, profile.employmentEndDate);
+                    filled++;
+                }
+            }
+
+            return filled;
+        }
+
+        async function fillEducation(container, profile) {
+            let filled = 0;
+            
+            // Fill institution
+            const institution = findFieldInContainer(container, ['institution', 'university', 'college', 'school']);
+            if (institution && profile.institution) {
+                await fillField(institution, profile.institution);
+                filled++;
+            }
+
+            // Fill degree
+            const degree = findFieldInContainer(container, ['degree', 'qualification', 'level']);
+            if (degree && profile.degreeType) {
+                await fillField(degree, profile.degreeType);
+                filled++;
+            }
+
+            // Fill major
+            const major = findFieldInContainer(container, ['major', 'field', 'study']);
+            if (major && profile.major) {
+                await fillField(major, profile.major);
+                filled++;
+            }
+
+            // Fill graduation date
+            const graduation = findFieldInContainer(container, ['graduation', 'grad', 'completion']);
+            if (graduation && profile.graduationDate) {
+                await fillField(graduation, profile.graduationDate);
+                filled++;
+            }
+
+            return filled;
+        }
+
+        function findFieldInContainer(container, keywords) {
+            const inputs = container.querySelectorAll('input, select, textarea');
+            
+            for (const input of inputs) {
+                if (input.type === 'hidden') continue;
+                
+                const label = findLabel(input);
+                const name = (input.name || '').toLowerCase();
+                const id = (input.id || '').toLowerCase();
+                const ariaLabel = (input.getAttribute('aria-label') || '').toLowerCase();
+                
+                const combined = `${label} ${name} ${id} ${ariaLabel}`;
+                
+                for (const keyword of keywords) {
+                    if (combined.includes(keyword.toLowerCase())) {
+                        return input;
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function findLabel(input) {
+            if (input.id) {
+                const label = document.querySelector(`label[for="${input.id}"]`);
+                if (label) return (label.textContent || '').toLowerCase();
+            }
+            
+            const parentLabel = input.closest('label');
+            if (parentLabel) {
+                return (parentLabel.textContent || '').toLowerCase();
+            }
+            
+            let sibling = input.previousElementSibling;
+            while (sibling) {
+                if (sibling.tagName === 'LABEL') {
+                    return (sibling.textContent || '').toLowerCase();
+                }
+                sibling = sibling.previousElementSibling;
+            }
+            
+            return '';
+        }
+
+        async function fillField(field, value) {
+            if (!field || !value) return false;
+            
+            const tagName = field.tagName.toLowerCase();
+            const type = (field.type || '').toLowerCase();
+
+            if (tagName === 'select') {
+                const options = Array.from(field.options);
+                const normalizedValue = String(value).toLowerCase();
+                
+                const match = options.find(opt => 
+                    opt.value.toLowerCase() === normalizedValue ||
+                    opt.text.toLowerCase().includes(normalizedValue)
+                );
+                
+                if (match) {
+                    field.value = match.value;
+                    field.classList.add('filled-field');
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    return true;
+                }
+            } else {
+                field.value = String(value);
+                field.classList.add('filled-field');
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+                return true;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            return true;
+        }
+
+        // Log initialization
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('[Test] Workday Dynamic Add Sections test page loaded');
+            console.log('[Test] Mock profile:', mockProfile);
+        });
+
+        // Listen for custom events to auto-fill new sections
+        document.addEventListener('workdayFieldsAdded', async function(event) {
+            console.log('[Test] New fields detected:', event.detail.type);
+            
+            // Auto-fill after a short delay
+            setTimeout(async () => {
+                if (event.detail.type === 'experience') {
+                    const filled = await fillWorkExperience(event.detail.container, mockProfile);
+                    console.log(`[Test] Auto-filled ${filled} work experience fields`);
+                } else if (event.detail.type === 'education') {
+                    const filled = await fillEducation(event.detail.container, mockProfile);
+                    console.log(`[Test] Auto-filled ${filled} education fields`);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
