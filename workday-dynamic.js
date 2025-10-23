@@ -10,7 +10,7 @@
     'use strict';
 
     // Debug flag
-    const DEBUG = true;
+    const DEBUG = false;
 
     // Workday hostname patterns
     const WORKDAY_HOSTS = [
