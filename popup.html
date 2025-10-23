@@ -9,52 +9,218 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Job Application Autofill</h1>
+            <h1>
+                <span class="header-icon">✨</span>
+                Job Application Autofill
+            </h1>
         </div>
         
-        <div class="tabs">
-            <button id="loginTab" class="tab-button">Login</button>
-            <button id="profileTab" class="tab-button active">Profile</button>
-            <button id="autofillTab" class="tab-button">Autofill</button>
+        <div class="tabs" role="tablist" aria-label="Profile sections">
+            <button id="profileTab" class="tab-button active" role="tab" aria-selected="true" aria-controls="profileSection">Profile</button>
+            <button id="autofillTab" class="tab-button" role="tab" aria-selected="false" aria-controls="autofillSection">Autofill</button>
+            <div class="tab-indicator" aria-hidden="true"></div>
         </div>
 
-        <div id="loginSection" class="section">
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" name="loginEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" name="loginPassword" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-                <div id="loginStatus" class="status-message"></div>
-            </form>
-        </div>
 
-        <div id="profileSection" class="section active">
+
+        <div id="profileSection" class="section active" role="tabpanel" aria-labelledby="profileTab">
+            <div class="profile-selector">
+                <label for="profileSelect">Select Profile:</label>
+                <select id="profileSelect" name="profileSelect">
+                    <option value="1">Profile 1</option>
+                    <option value="2">Profile 2</option>
+                    <option value="3">Profile 3</option>
+                    <option value="4">Profile 4</option>
+                    <option value="5">Profile 5</option>
+                </select>
+                <button id="deleteProfileBtn" class="btn btn-danger">Delete Profile</button>
+            </div>
+            
+            <div class="info-text">
+                <p><strong>Note:</strong> This extension no longer manages personal contact or address information (name, email, phone, address, city, state, postal code, country). Chrome's built-in Address Autofill will handle these fields. Simply click or focus on those fields to trigger Chrome's autofill suggestions.</p>
+            </div>
+            
             <form id="profileForm">
-                <!-- Existing profile fields -->
                 <div class="form-group">
-                    <label for="firstName">First Name *</label>
-                    <input type="text" id="firstName" name="firstName" required>
+                    <label for="linkedinUrl">LinkedIn URL</label>
+                    <input type="url" id="linkedinUrl" name="linkedinUrl" placeholder="https://linkedin.com/in/yourprofile">
                 </div>
                 <div class="form-group">
-                    <label for="lastName">Last Name *</label>
-                    <input type="text" id="lastName" name="lastName" required>
+                    <label for="githubUrl">GitHub URL</label>
+                    <input type="url" id="githubUrl" name="githubUrl" placeholder="https://github.com/yourusername">
                 </div>
                 <div class="form-group">
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="portfolioUrl">Portfolio / Website URL</label>
+                    <input type="url" id="portfolioUrl" name="portfolioUrl" placeholder="https://yourportfolio.com">
                 </div>
                 <div class="form-group">
-                    <label for="portfolio">Portfolio/Website</label>
-                    <input type="url" id="portfolio" name="portfolio" placeholder="https://yourportfolio.com">
+                    <label for="usWorkEligible">Are you legally authorized to work in the United States? *</label>
+                    <select id="usWorkEligible" name="usWorkEligible" required>
+                        <option value="">Please select</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
                 </div>
-
                 <div class="form-group">
-                    <label for="resume">Resume (PDF/DOC/DOCX)</label>
+                    <label for="sponsorshipRequired">Will you now or in the future require sponsorship for employment visa status? *</label>
+                    <select id="sponsorshipRequired" name="sponsorshipRequired" required>
+                        <option value="">Please select</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="howDidYouHear">How did you hear about us?</label>
+                    <select id="howDidYouHear" name="howDidYouHear">
+                        <option value="">Please select</option>
+                        <option value="LinkedIn">LinkedIn</option>
+                        <option value="Google">Google</option>
+                        <option value="Twitter">Twitter</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="relocateWilling">Are you located in or willing to relocate to work on-site?</label>
+                    <select id="relocateWilling" name="relocateWilling">
+                        <option value="">Please select</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="travelWilling">Are you willing to travel for business?</label>
+                    <select id="travelWilling" name="travelWilling">
+                        <option value="">Please select</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="occasionally">Occasionally</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Earliest Available Start Date</label>
+                    <input type="date" id="startDate" name="startDate">
+                </div>
+                <div class="form-group">
+                    <label for="noticePeriod">What is the availability of notice period</label>
+                    <select id="noticePeriod" name="noticePeriod">
+                        <option value="">Please select</option>
+                        <option value="Immediately">Immediately</option>
+                        <option value="in 1-2 weeks">in 1-2 weeks</option>
+                        <option value="in 3-4 weeks">in 3-4 weeks</option>
+                        <option value="in 5-12 weeks">in 5-12 weeks</option>
+                        <option value="more than 12 weeks">more than 12 weeks</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pronouns">Preferred Pronouns</label>
+                    <select id="pronouns" name="pronouns">
+                        <option value="">Please select</option>
+                        <option value="She/Her/Hers">She/Her/Hers</option>
+                        <option value="He/Him/His">He/Him/His</option>
+                        <option value="They/Them/Theirs">They/Them/Theirs</option>
+                        <option value="She/They">She/They</option>
+                        <option value="He/They">He/They</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="workedBefore">Have you ever worked for our company before?</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" id="workedBeforeYes" name="workedBefore" value="yes">
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" id="workedBeforeNo" name="workedBefore" value="no">
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="veteranStatus">Veteran Status</label>
+                    <select id="veteranStatus" name="veteranStatus">
+                        <option value="">Please select</option>
+                        <option value="I identify as one or more of the classifications of protected veteran listed above">I identify as one or more of the classifications of protected veteran</option>
+                        <option value="I am not a protected veteran">I am not a protected veteran</option>
+                        <option value="I decline to self-identify">I decline to self-identify</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="salaryMin">Salary Expectations - Minimum (Yearly)</label>
+                    <input type="text" id="salaryMin" name="salaryMin" placeholder="e.g., 80000">
+                </div>
+                <div class="form-group">
+                    <label for="salaryMax">Salary Expectations - Maximum (Yearly)</label>
+                    <input type="text" id="salaryMax" name="salaryMax" placeholder="e.g., 120000">
+                </div>
+                <div class="form-group">
+                    <label for="institution">Education - Institution</label>
+                    <input type="text" id="institution" name="institution" placeholder="e.g., University of California">
+                </div>
+                <div class="form-group">
+                    <label for="degreeType">Education - Degree Type</label>
+                    <select id="degreeType" name="degreeType">
+                        <option value="">Please select</option>
+                        <option value="Masters">Masters</option>
+                        <option value="Bachelors">Bachelors</option>
+                        <option value="PhD">PhD</option>
+                        <option value="Associate">Associate</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="major">Education - Major / Field of Study</label>
+                    <input type="text" id="major" name="major" placeholder="e.g., Computer Science">
+                </div>
+                <div class="form-group">
+                    <label for="graduationDate">Education - Graduation Date</label>
+                    <input type="text" id="graduationDate" name="graduationDate" placeholder="MM/YYYY or DD/MM/YYYY">
+                </div>
+                <div class="form-group">
+                    <label for="cgpa">Education - CGPA/GPA</label>
+                    <input type="text" id="cgpa" name="cgpa" placeholder="e.g., 3.8">
+                </div>
+                <div class="form-group">
+                    <label for="percentage">Education - Percentage (%)</label>
+                    <input type="text" id="percentage" name="percentage" placeholder="e.g., 85">
+                </div>
+                <div class="form-group">
+                    <label for="employer">Most Recent Employer</label>
+                    <input type="text" id="employer" name="employer" placeholder="e.g., Tech Company Inc.">
+                </div>
+                <div class="form-group">
+                    <label for="jobTitle">Most Recent Job Title</label>
+                    <input type="text" id="jobTitle" name="jobTitle" placeholder="e.g., Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label for="coverLetter">Cover Letter (Optional)</label>
+                    <textarea id="coverLetter" name="coverLetter" rows="4" placeholder="Brief cover letter or message..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="race">Race</label>
+                    <select id="race" name="race">
+                        <option value="">Please select</option>
+                        <option value="Hispanic or Latino">Hispanic or Latino</option>
+                        <option value="White (Not Hispanic or Latino)">White (Not Hispanic or Latino)</option>
+                        <option value="Black or African American (Not Hispanic or Latino)">Black or African American (Not Hispanic or Latino)</option>
+                        <option value="Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)">Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)</option>
+                        <option value="Asian (Not Hispanic or Latino)">Asian (Not Hispanic or Latino)</option>
+                        <option value="American Indian or Alaska Native (Not Hispanic or Latino)">American Indian or Alaska Native (Not Hispanic or Latino)</option>
+                        <option value="Two or More Races (Not Hispanic or Latino)">Two or More Races (Not Hispanic or Latino)</option>
+                        <option value="Decline to self-identify">Decline to self-identify</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender">
+                        <option value="">Please select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="resume">Resume File (PDF/DOC/DOCX)</label>
                     <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx">
                 </div>
 
@@ -62,21 +228,33 @@
             </form>
         </div>
 
-        <div id="autofillSection" class="section">
+        <div id="autofillSection" class="section" role="tabpanel" aria-labelledby="autofillTab">
             <div class="autofill-content">
                 <p class="info-text">Click the button below to automatically fill job application forms on this page with your saved profile data.</p>
                 <button id="autofillBtn" class="btn btn-autofill">
                     <span class="btn-icon">&#9889;</span>
                     Autofill Forms
                 </button>
-                <div id="status" class="status-message"></div>
+                <button id="screenshotBtn" class="btn btn-screenshot">
+                    <span class="btn-icon">&#128247;</span>
+                    Capture Screenshot
+                </button>
+                <div id="status" class="status-message" role="status" aria-live="polite"></div>
+                <div id="screenshotPreview" class="screenshot-preview hidden" aria-live="polite">
+                    <img id="screenshotImage" alt="Captured tab screenshot preview">
+                </div>
+                <button id="sendProofBtn" class="btn btn-send-proof" disabled>
+                    <span class="btn-icon">&#128228;</span>
+                    Send Proof
+                </button>
                 <div class="help-text">
                     <p><strong>How it works:</strong></p>
                     <ul>
-                        <li>Uses Google Gemini AI to intelligently analyze the page</li>
-                        <li>AI identifies form fields regardless of naming conventions</li>
-                        <li>Uploads your resume if the job form has a file field</li>
-                        <li>Automatically generates and executes custom filling logic</li>
+                        <li>Fills job-specific fields: work authorization, visa sponsorship, education, experience, etc.</li>
+                        <li>Personal contact and address fields are handled by Chrome's built-in Address Autofill</li>
+                        <li>Click or focus on name, email, phone, or address fields to trigger Chrome's suggestions</li>
+                        <li>Uploads your resume file to file input fields</li>
+                        <li>Supports multiple profiles for different job applications</li>
                     </ul>
                 </div>
             </div>
@@ -85,3 +263,5 @@
     <script src="popup.js"></script>
 </body>
 </html>
+
+
