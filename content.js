@@ -1,4 +1,4 @@
-FIELD_MAPPINGS: {
+const FIELD_MAPPINGS = {
     // ... existing mappings
     legalFirstName: {
         priority: ['legal_first_name', 'legalfirstname', 'legal_name', 'first_name_legal', 'legal-first-name', 'legal-name'],
