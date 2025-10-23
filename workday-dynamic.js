@@ -10,14 +10,15 @@
     'use strict';
 
     // Debug flag
-    const DEBUG = false;
+    const DEBUG = true;
 
     // Workday hostname patterns
     const WORKDAY_HOSTS = [
         'myworkdayjobs.com',
         '.myworkdayjobs.com',
         '.workday.com',
-        'workday.'
+        'workday.',
+        'localhost' // Allow testing on localhost
     ];
 
     /**
@@ -25,6 +26,12 @@
      */
     function isWorkdayHost() {
         const hostname = window.location.hostname.toLowerCase();
+        
+        // Allow localhost for testing
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return true;
+        }
+        
         return WORKDAY_HOSTS.some(pattern => {
             if (pattern.startsWith('.')) {
                 return hostname.includes(pattern) || hostname.endsWith(pattern.substring(1));

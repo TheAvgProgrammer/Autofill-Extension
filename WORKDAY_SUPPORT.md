@@ -4,7 +4,7 @@ This document describes the Workday-specific features and implementation details
 
 ## Overview
 
-The extension provides first-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized handlers for Workday's custom widgets and multi-page flows.
+The extension provides first-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized handlers for Workday's custom widgets, multi-page flows, and **dynamic "Add" sections** for Work Experience and Education.
 
 ## Features
 
@@ -18,6 +18,70 @@ When Workday mode is detected, the extension:
 - Logs detection to console
 - Activates Workday-specific widget handlers
 - Sets up dynamic content monitoring
+- **NEW**: Activates dynamic "Add" button detection for repeatable sections
+
+### 1.5. Dynamic "Add" Sections Support (NEW)
+
+The extension now supports Workday's dynamic "Add" sections where users can add multiple entries for Work Experience and Education by clicking Add buttons. This feature is implemented in `workday-dynamic.js`.
+
+#### How It Works
+
+**Add Button Detection:**
+- Monitors clicks on buttons with text/labels containing "Add" (case-insensitive)
+- Uses event delegation to capture all Add button clicks
+- Filters out "Remove" and "Delete" buttons
+- Detects buttons via:
+  - `data-automation-id` attributes
+  - `aria-label` attributes
+  - `title` attributes
+  - Button text content
+
+**Section Type Detection:**
+- Automatically determines if a section is for Work Experience or Education
+- Checks for keywords in labels and surrounding text:
+  - Work Experience: "work", "experience", "employment", "job", "position", "company"
+  - Education: "education", "school", "university", "college", "degree", "academic"
+
+**MutationObserver:**
+- Monitors DOM for newly injected form fields after Add button click
+- Waits 500ms for all fields to render completely
+- Automatically fills fields with profile data
+- Disconnects after successful fill or 10-second timeout
+
+**Work Experience Fields Filled:**
+- Company/Employer name
+- Job Title/Position
+- Currently working here (checkbox) - auto-detected based on end date presence
+- Start Date (formatted as yyyy-MM-dd)
+- End Date (only if not currently employed)
+
+**Education Fields Filled:**
+- Educational Institution
+- Degree Level (matched against select options)
+- Field of Study / Major
+- Graduation Date (formatted as yyyy-MM-dd)
+
+#### Profile Data Required
+
+To use dynamic sections, add these fields to your profile:
+- `employmentStartDate` - Format: yyyy-MM-dd or Date object
+- `employmentEndDate` - Leave blank if currently employed
+- `employer` - Company name (already exists)
+- `jobTitle` - Job title (already exists)
+- `institution` - University/college name (already exists)
+- `degreeType` - Degree level (already exists)
+- `major` - Field of study (already exists)
+- `graduationDate` - Graduation date (already exists)
+
+#### Testing
+
+Use `test-workday-dynamic-standalone.html` to test the feature:
+1. Open the test file in a browser
+2. Click "Add Work Experience" or "Add Education" buttons
+3. New field groups will appear
+4. Click "Simulate Autofill" to test automatic filling
+5. Fields will be highlighted in green when filled
+6. Check console for detailed logs
 
 ### 2. Workday Widget Handlers
 
