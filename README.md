@@ -6,6 +6,7 @@ A Chrome extension that automatically fills job application forms with your save
 
 - **Multi-Profile Support**: Store and manage up to 5 different profiles
 - **Workday Optimization**: First-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized widget handlers
+- **Dynamic "Add" Sections**: Automatically fills dynamically added Work Experience and Education sections on Workday (NEW)
 - **Multi-Page Flow Support**: Automatically handles multi-page applications with progress tracking and dynamic content detection
 - **Comprehensive Profile Fields**: LinkedIn URL, GitHub URL, Portfolio URL, US Work Authorization, Visa Sponsorship, Referral Source, Education, Experience, Salary Expectations, and Resume File
 - **Contact Field Deferral**: Personal contact and address fields (name, email, phone, address, city, state, postal code, country) are deferred to Chrome's built-in Address Autofill for better privacy and security
@@ -120,6 +121,43 @@ To test Workday-specific functionality:
 5. Focus on contact fields (name, email, phone) and verify Chrome's autofill suggestions appear
 
 **Note**: Contact/address fields are intentionally left empty by the extension. To fill them, click on each field and use Chrome's built-in autofill suggestions (make sure you have addresses saved in Chrome Settings → Autofill → Addresses).
+
+### Testing Dynamic "Add" Sections (NEW)
+
+To test the new dynamic Add sections feature for Work Experience and Education:
+
+1. Open **test-workday-dynamic-standalone.html** in a browser
+2. Set up your profile with employment and education dates:
+   - `employmentStartDate` - e.g., "2020-01-15"
+   - `employmentEndDate` - Leave blank if currently employed
+   - `employer` - Company name
+   - `jobTitle` - Job title
+   - `institution` - University name
+   - `degreeType` - Degree level
+   - `major` - Field of study
+   - `graduationDate` - Graduation date
+3. Click "Add Work Experience" button - a new entry form appears
+4. The extension automatically detects and fills the new fields:
+   - Company Name
+   - Job Title
+   - Currently Working Here checkbox (checked if no end date)
+   - Start Date
+   - End Date (if applicable)
+5. Click "Add Education" button - a new entry form appears
+6. The extension automatically fills:
+   - Educational Institution
+   - Degree Level
+   - Field of Study / Major
+   - Graduation Date
+7. You can add multiple entries by clicking Add buttons again
+8. Use "Simulate Autofill" to manually trigger autofill on all entries
+9. Check console for detailed logs (in DEBUG mode)
+
+**Real Workday Testing**: On actual Workday sites (*.myworkdayjobs.com), the extension will automatically:
+- Detect Add buttons for Work Experience and Education sections
+- Monitor for newly injected form fields
+- Fill fields immediately after they appear
+- Support multiple entries per section
 
 ## How It Works
 
