@@ -15,10 +15,6 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-<<<<<<< HEAD
-      "js": ["content.js"],
-      "all_frames": true
-=======
       "js": ["content.js"]
     },
     {
@@ -27,7 +23,6 @@
         "*://*.workday.com/*"
       ],
       "js": ["workday-dynamic.js"]
->>>>>>> e715bd476e097ed23dc5aedd776eb89ed96bc444
     }
 ],
   "icons": {
