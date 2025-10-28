@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context-Aware Field Matching Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .filled {
+            background-color: #e8f5e9 !important;
+            border-color: #4CAF50 !important;
+        }
+        .test-description {
+            background-color: #fff3cd;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ffc107;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .workday-style {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        fieldset {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        legend {
+            padding: 0 10px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Context-Aware Field Matching Test</h1>
+    <p>This test page validates context-aware field matching for various ATS platforms like Workday and Greenhouse.</p>
+
+    <!-- Test 1: Standard Label Association -->
+    <div class="test-section">
+        <h2>Test 1: Standard Label Association (for attribute)</h2>
+        <div class="test-description">
+            Tests standard label[for] association - the most common pattern
+        </div>
+        <div class="form-group">
+            <label for="firstName1">First Name</label>
+            <input type="text" id="firstName1" name="fname">
+        </div>
+        <div class="form-group">
+            <label for="email1">Email Address</label>
+            <input type="email" id="email1" name="contact_email">
+        </div>
+        <div class="form-group">
+            <label for="phone1">Phone Number</label>
+            <input type="tel" id="phone1" name="contact_phone">
+        </div>
+    </div>
+
+    <!-- Test 2: Workday-Style: Label Outside Input (Previous Sibling) -->
+    <div class="test-section">
+        <h2>Test 2: Workday-Style - Label as Previous Sibling</h2>
+        <div class="test-description">
+            Tests Workday pattern where label is a previous sibling div/span
+        </div>
+        <div class="workday-style">
+            <div style="margin-bottom: 5px; font-weight: bold;">LinkedIn Profile URL</div>
+            <input type="url" data-automation-id="textInput" name="social_linkedin">
+        </div>
+        <div class="workday-style">
+            <div style="margin-bottom: 5px; font-weight: bold;">GitHub Profile</div>
+            <input type="url" data-automation-id="textInput" name="github">
+        </div>
+        <div class="workday-style">
+            <span style="display: block; margin-bottom: 5px; font-weight: bold;">Are you legally authorized to work in the United States?</span>
+            <select data-automation-id="selectWidget" name="work_auth">
+                <option value="">Select an option</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Test 3: Aria-Label and Aria-Labelledby -->
+    <div class="test-section">
+        <h2>Test 3: ARIA Labels (aria-label and aria-labelledby)</h2>
+        <div class="test-description">
+            Tests ARIA-based label associations common in accessible forms
+        </div>
+        <div class="form-group">
+            <input type="text" aria-label="Portfolio Website URL" name="portfolio">
+        </div>
+        <div class="form-group">
+            <span id="sponsorship-label">Will you require visa sponsorship now or in the future?</span>
+            <select aria-labelledby="sponsorship-label" name="visa_sponsor">
+                <option value="">Choose</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <span id="notice-label">Notice Period (in weeks)</span>
+            <input type="text" aria-labelledby="notice-label" name="availability">
+        </div>
+    </div>
+
+    <!-- Test 4: Greenhouse-Style: Table Headers -->
+    <div class="test-section">
+        <h2>Test 4: Greenhouse-Style - Table-Based Forms</h2>
+        <div class="test-description">
+            Tests table-based forms where column headers provide context
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Institution Name</th>
+                    <th>Degree Type</th>
+                    <th>Field of Study</th>
+                    <th>Graduation Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" name="edu_inst_1"></td>
+                    <td>
+                        <select name="edu_degree_1">
+                            <option value="">Select</option>
+                            <option value="bachelors">Bachelor's</option>
+                            <option value="masters">Master's</option>
+                            <option value="phd">PhD</option>
+                        </select>
+                    </td>
+                    <td><input type="text" name="edu_major_1"></td>
+                    <td><input type="date" name="edu_grad_1"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Test 5: Fieldset and Legend -->
+    <div class="test-section">
+        <h2>Test 5: Fieldset with Legend Context</h2>
+        <div class="test-description">
+            Tests fieldset/legend grouping for context
+        </div>
+        <fieldset>
+            <legend>Work Experience Details</legend>
+            <div class="form-group">
+                <label for="employer1">Company Name:</label>
+                <input type="text" id="employer1" name="exp_company">
+            </div>
+            <div class="form-group">
+                <label for="jobtitle1">Job Title:</label>
+                <input type="text" id="jobtitle1" name="exp_title">
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Salary Expectations</legend>
+            <div class="form-group">
+                <label>Minimum:</label>
+                <input type="number" name="sal_min">
+            </div>
+            <div class="form-group">
+                <label>Maximum:</label>
+                <input type="number" name="sal_max">
+            </div>
+        </fieldset>
+    </div>
+
+    <!-- Test 6: Complex Nested Structure (Realistic ATS) -->
+    <div class="test-section">
+        <h2>Test 6: Complex Nested Structure</h2>
+        <div class="test-description">
+            Tests deeply nested structures common in modern ATS platforms
+        </div>
+        <div class="workday-style">
+            <div style="display: flex; flex-direction: column;">
+                <div style="margin-bottom: 8px;">
+                    <span style="font-weight: bold; display: block; margin-bottom: 3px;">
+                        How did you hear about this position?
+                    </span>
+                    <span style="font-size: 12px; color: #666;">Please select the referral source</span>
+                </div>
+                <select name="referral_src" data-automation-id="selectWidget">
+                    <option value="">Select an option</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="google">Google</option>
+                    <option value="twitter">Twitter</option>
+                    <option value="friend">Friend/Referral</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+        </div>
+        <div class="workday-style">
+            <div style="display: flex; flex-direction: column;">
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 3px;">Have you previously worked for our company?</div>
+                    <div style="font-size: 12px; color: #666;">Select Yes or No</div>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <label style="display: flex; align-items: center;">
+                        <input type="radio" name="prev_worked" value="yes" style="width: auto; margin-right: 5px;">
+                        <span>Yes</span>
+                    </label>
+                    <label style="display: flex; align-items: center;">
+                        <input type="radio" name="prev_worked" value="no" style="width: auto; margin-right: 5px;">
+                        <span>No</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 7: Placeholder-Heavy Forms -->
+    <div class="test-section">
+        <h2>Test 7: Placeholder-Based Context</h2>
+        <div class="test-description">
+            Tests forms that rely heavily on placeholder text for context
+        </div>
+        <div class="form-group">
+            <input type="text" placeholder="Enter your first name" name="fn">
+        </div>
+        <div class="form-group">
+            <input type="text" placeholder="Enter your last name" name="ln">
+        </div>
+        <div class="form-group">
+            <input type="text" placeholder="City where you live" name="location_city">
+        </div>
+        <div class="form-group">
+            <input type="text" placeholder="State or Province" name="location_state">
+        </div>
+        <div class="form-group">
+            <input type="text" placeholder="Country" name="location_country">
+        </div>
+    </div>
+
+    <!-- Test 8: Multiple Choice Questions -->
+    <div class="test-section">
+        <h2>Test 8: Multiple Choice / Radio Buttons</h2>
+        <div class="test-description">
+            Tests context extraction for radio button groups
+        </div>
+        <fieldset>
+            <legend>Diversity & Inclusion</legend>
+            <div class="form-group">
+                <div style="font-weight: bold; margin-bottom: 10px;">What is your gender?</div>
+                <label><input type="radio" name="gender" value="male"> Male</label><br>
+                <label><input type="radio" name="gender" value="female"> Female</label><br>
+                <label><input type="radio" name="gender" value="other"> Other</label><br>
+                <label><input type="radio" name="gender" value="decline"> Prefer not to say</label>
+            </div>
+        </fieldset>
+        
+        <fieldset>
+            <legend>Travel Requirements</legend>
+            <div class="form-group">
+                <div style="font-weight: bold; margin-bottom: 10px;">Are you willing to travel for work?</div>
+                <label><input type="radio" name="travel" value="yes"> Yes</label><br>
+                <label><input type="radio" name="travel" value="no"> No</label>
+            </div>
+        </fieldset>
+    </div>
+
+    <script>
+        // Monitor filled fields for visual feedback
+        document.addEventListener('input', (e) => {
+            if (e.target.value) {
+                e.target.classList.add('filled');
+            } else {
+                e.target.classList.remove('filled');
+            }
+        });
+
+        document.addEventListener('change', (e) => {
+            if (e.target.value) {
+                e.target.classList.add('filled');
+            } else {
+                e.target.classList.remove('filled');
+            }
+        });
+
+        // Log context-aware matching if available
+        setTimeout(() => {
+            if (window.contextAwareMatching) {
+                console.log('[Test] Context-aware matching module detected!');
+                const fields = window.contextAwareMatching.findFormFieldsWithContext();
+                console.log(`[Test] Found ${fields.length} fields with context`);
+                console.log('[Test] Sample field contexts:', fields.slice(0, 3));
+            } else {
+                console.log('[Test] Context-aware matching module not found');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
