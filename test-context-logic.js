@@ -131,7 +131,9 @@ function testContextScoring() {
     
     const context = window.contextAwareMatching.extractFieldContext(input);
     
-    // Sample mapping for LinkedIn
+    // Sample mapping for LinkedIn (should match structure in content.js)
+    // Note: This is a simplified version for testing. For production tests,
+    // consider exporting FIELD_MAPPINGS from content.js for consistency.
     const linkedinMapping = {
         priority: ['linkedin', 'linkedin_url', 'linkedinurl', 'linkedin_profile'],
         keywords: ['linkedin', 'profile', 'social']
@@ -192,7 +194,19 @@ function runAllTests() {
     return passed === total;
 }
 
-// Auto-run tests after a delay to ensure page is loaded
-setTimeout(() => {
-    runAllTests();
-}, 1000);
+// Wait for DOM to be fully ready and context module to load
+function waitForReady(callback, maxAttempts = 10, attempt = 0) {
+    if (attempt >= maxAttempts) {
+        console.error('Timeout: Context module not loaded after', maxAttempts, 'attempts');
+        return;
+    }
+    
+    if (document.readyState === 'complete' && typeof window.contextAwareMatching !== 'undefined') {
+        callback();
+    } else {
+        setTimeout(() => waitForReady(callback, maxAttempts, attempt + 1), 100);
+    }
+}
+
+// Run tests when ready
+waitForReady(runAllTests);

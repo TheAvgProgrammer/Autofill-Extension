@@ -5,7 +5,7 @@ A Chrome extension that automatically fills job application forms with your save
 ## Features
 
 - **Multi-Profile Support**: Store and manage up to 5 different profiles
-- **Context-Aware Field Matching**: Advanced field detection using surrounding HTML context (labels, nearby text, ARIA attributes) for improved accuracy on ATS platforms like Workday and Greenhouse (NEW)
+- **Context-Aware Field Matching**: Advanced field detection using surrounding HTML context (labels, nearby text, ARIA attributes) for improved accuracy on ATS platforms like Workday and Greenhouse
 - **Workday Optimization**: First-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized widget handlers
 - **Dynamic "Add" Sections**: Automatically fills dynamically added Work Experience and Education sections on Workday
 - **Multi-Page Flow Support**: Automatically handles multi-page applications with progress tracking and dynamic content detection
