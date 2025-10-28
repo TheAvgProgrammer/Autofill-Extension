@@ -5,13 +5,14 @@ A Chrome extension that automatically fills job application forms with your save
 ## Features
 
 - **Multi-Profile Support**: Store and manage up to 5 different profiles
+- **Context-Aware Field Matching**: Advanced field detection using surrounding HTML context (labels, nearby text, ARIA attributes) for improved accuracy on ATS platforms like Workday and Greenhouse
 - **Workday Optimization**: First-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized widget handlers
-- **Dynamic "Add" Sections**: Automatically fills dynamically added Work Experience and Education sections on Workday (NEW)
+- **Dynamic "Add" Sections**: Automatically fills dynamically added Work Experience and Education sections on Workday
 - **Multi-Page Flow Support**: Automatically handles multi-page applications with progress tracking and dynamic content detection
 - **Comprehensive Profile Fields**: LinkedIn URL, GitHub URL, Portfolio URL, US Work Authorization, Visa Sponsorship, Referral Source, Education, Experience, Salary Expectations, and Resume File
 - **Contact Field Deferral**: Personal contact and address fields (name, email, phone, address, city, state, postal code, country) are deferred to Chrome's built-in Address Autofill for better privacy and security
 - **Referral Source Tracking**: "How did you hear about us?" field with options: LinkedIn, Google, Twitter, Friend, Other
-- **Intelligent Pattern Matching**: Uses regex-based field detection to identify form fields accurately
+- **Intelligent Pattern Matching**: Uses regex-based field detection combined with context-aware scoring to identify form fields accurately
 - **Radio Button Support**: Handles both dropdown and radio button inputs for yes/no questions
 - **US Work Authorization**: Automatically fills work authorization questions (dropdowns and radio buttons)
 - **Visa Sponsorship**: Automatically fills visa sponsorship questions (dropdowns and radio buttons)
@@ -161,21 +162,38 @@ To test the new dynamic Add sections feature for Work Experience and Education:
 
 ## How It Works
 
-The extension uses intelligent pattern matching to identify form fields based on:
+The extension uses intelligent pattern matching combined with context-aware analysis to identify form fields based on:
 - Field names and IDs
-- Label text content
+- Label text content (both explicit and implicit)
 - Placeholder text
-- ARIA labels
+- ARIA labels and descriptions
+- Surrounding HTML context (previous/next siblings, parent elements)
+- Table headers and fieldset legends
 - Field types (email, tel, url, text, select, radio, etc.)
 
 ### Field Matching Algorithm
 
-1. **Priority Keywords**: Each profile field has priority keywords that score higher (e.g., "firstname", "first_name" for First Name)
-2. **General Keywords**: Additional keywords that score lower but help catch edge cases
-3. **Scoring System**: Fields are scored based on matches, with exact matches receiving bonus points
-4. **Multiple Matches**: The system can fill multiple fields of the same type to handle forms with redundant fields
+1. **Context Extraction**: The `context.js` module extracts all available context from input elements:
+   - Explicit labels (for, wrapping, aria-label, aria-labelledby)
+   - Data automation IDs (common in Workday)
+   - Nearby text (previous/next siblings, parent text)
+   - Semantic structure (table headers, fieldset legends, nearby headings)
 
-### New Features
+2. **Context-Aware Scoring**: Each field is scored based on:
+   - **High Priority** (40-50 points): Explicit labels, placeholders, automation IDs
+   - **Medium Priority** (25-35 points): Nearby text, table headers, element attributes
+   - **Lower Priority** (10-20 points): Parent text, distant context
+   - Exact matches receive 2x weight, keywords at start receive 1.5x weight
+
+3. **Hybrid Scoring**: Combines traditional attribute-based scoring (40%) with context-aware scoring (60%) for optimal accuracy
+
+4. **Priority Keywords**: Each profile field has priority keywords that score higher (e.g., "firstname", "first_name" for First Name)
+
+5. **Multiple Matches**: The system can fill multiple fields of the same type to handle forms with redundant fields
+
+For detailed information about context-aware matching, see [CONTEXT_AWARE_MATCHING.md](CONTEXT_AWARE_MATCHING.md).
+
+### Key Features
 
 - **Full Name Handling**: Automatically generates full name from firstName + lastName when a "Full Name" field is detected
 - **International Phone Support**: Combines country code and phone number during autofill (e.g., "+1" + "5551234567" = "+1 5551234567"). When a dial-code dropdown is detected, the dropdown is set and the phone input remains local-only.

@@ -1147,8 +1147,21 @@ function attachResumeToInputs(resumeFile) {
         const matches = [];
         const scoredFields = [];
 
+        // Use context-aware matching if available
+        const useContextMatching = typeof window.contextAwareMatching !== 'undefined';
+
         formFields.forEach(field => {
-            const score = calculateFieldScore(field, mapping);
+            let score = calculateFieldScore(field, mapping);
+            
+            // Enhance with context-aware scoring if available
+            if (useContextMatching && field.element) {
+                const context = window.contextAwareMatching.extractFieldContext(field.element);
+                const contextScore = window.contextAwareMatching.calculateContextScore(context, mapping);
+                
+                // Combine traditional score with context score (context score has more weight)
+                score = score * 0.4 + contextScore * 0.6;
+            }
+            
             if (score > 0) {
                 scoredFields.push({ field, score });
             }
