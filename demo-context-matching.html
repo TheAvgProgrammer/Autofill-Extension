@@ -220,7 +220,7 @@
             testCases.forEach(test => {
                 const traditionalScore = traditionalMatch(test.element, test.target);
                 const contextResult = contextAwareMatch(test.element, test.target);
-                const contextScore = contextResult.score;
+                const contextScore = typeof contextResult.score === 'number' ? contextResult.score : 0;
 
                 const improvement = contextScore - traditionalScore;
                 const improvementPercent = traditionalScore > 0 
