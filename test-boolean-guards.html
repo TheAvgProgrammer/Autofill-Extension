@@ -221,7 +221,7 @@
                     <option value="Other">Other</option>
                 </select>
                 <div class="expected">
-                    <strong>Expected:</strong> This field should remain empty because pronouns are not in the SKIP_FIELDS list and there's no profile key for them yet. This test ensures pronouns don't leak into work authorization fields.
+                    <strong>Expected:</strong> This field should remain empty in this test. This ensures pronouns don't leak into work authorization fields.
                 </div>
             </div>
         </div>
@@ -254,6 +254,11 @@
     <div id="testResults" class="result-box"></div>
 
     <script>
+        // Constants for test validation
+        const PRONOUN_PATTERN = /she|he|they|her|him|them/i;
+        const WORK_AUTH_PATTERN = /work.*auth|work.*eligible|us.*auth|us.*eligible|authorized/i;
+        const SPONSORSHIP_PATTERN = /sponsor|visa/i;
+        
         // Monitor form changes to highlight filled fields
         document.querySelectorAll('input, select').forEach(element => {
             element.addEventListener('change', function() {
@@ -262,9 +267,9 @@
                     console.log(`✓ Field filled: ${this.name || this.id} = ${this.value}`);
                     
                     // Check for pronoun values in work auth/sponsorship fields
-                    const isPronounValue = /she|he|they|her|him|them/i.test(this.value);
-                    const isWorkAuthField = /work.*auth|work.*eligible|us.*auth|us.*eligible|authorized/i.test(this.name || this.id);
-                    const isSponsorshipField = /sponsor|visa/i.test(this.name || this.id);
+                    const isPronounValue = PRONOUN_PATTERN.test(this.value);
+                    const isWorkAuthField = WORK_AUTH_PATTERN.test(this.name || this.id);
+                    const isSponsorshipField = SPONSORSHIP_PATTERN.test(this.name || this.id);
                     
                     if (isPronounValue && (isWorkAuthField || isSponsorshipField)) {
                         alert(`❌ ERROR: Pronoun value "${this.value}" was incorrectly filled into ${this.name || this.id}!`);
@@ -281,8 +286,8 @@
             });
         });
 
-        // Validation check after autofill
-        setTimeout(() => {
+        // Validation check after autofill - uses polling to detect completion
+        function runValidation() {
             let passed = 0;
             let failed = 0;
             const results = [];
@@ -292,7 +297,7 @@
             if (workAuth1.value === 'yes') {
                 passed++;
                 results.push('✓ Test 1 passed: Work authorization dropdown filled with "Yes"');
-            } else if (workAuth1.value.match(/she|he|they/i)) {
+            } else if (PRONOUN_PATTERN.test(workAuth1.value)) {
                 failed++;
                 results.push('✗ Test 1 FAILED: Work authorization filled with pronoun: ' + workAuth1.value);
             } else if (!workAuth1.value) {
@@ -304,7 +309,7 @@
             if (workAuthRadio && workAuthRadio.value === 'yes') {
                 passed++;
                 results.push('✓ Test 2 passed: Work authorization radio "Yes" selected');
-            } else if (workAuthRadio && workAuthRadio.value.match(/she|he|they/i)) {
+            } else if (workAuthRadio && PRONOUN_PATTERN.test(workAuthRadio.value)) {
                 failed++;
                 results.push('✗ Test 2 FAILED: Work authorization radio filled with pronoun: ' + workAuthRadio.value);
             } else {
@@ -316,7 +321,7 @@
             if (sponsorship1.value === 'no') {
                 passed++;
                 results.push('✓ Test 3 passed: Sponsorship dropdown filled with "No"');
-            } else if (sponsorship1.value.match(/she|he|they/i)) {
+            } else if (PRONOUN_PATTERN.test(sponsorship1.value)) {
                 failed++;
                 results.push('✗ Test 3 FAILED: Sponsorship filled with pronoun: ' + sponsorship1.value);
             } else if (!sponsorship1.value) {
@@ -328,7 +333,7 @@
             if (sponsorshipRadio && sponsorshipRadio.value === 'no') {
                 passed++;
                 results.push('✓ Test 4 passed: Sponsorship radio "No" selected');
-            } else if (sponsorshipRadio && sponsorshipRadio.value.match(/she|he|they/i)) {
+            } else if (sponsorshipRadio && PRONOUN_PATTERN.test(sponsorshipRadio.value)) {
                 failed++;
                 results.push('✗ Test 4 FAILED: Sponsorship radio filled with pronoun: ' + sponsorshipRadio.value);
             } else {
@@ -348,7 +353,11 @@
                 '<p><strong>Passed:</strong> ' + passed + ' | <strong>Failed:</strong> ' + failed + '</p>' +
                 '<ul>' + results.map(r => '<li>' + r + '</li>').join('') + '</ul>';
             resultsBox.className = 'result-box ' + (failed > 0 ? 'fail' : 'success');
-        }, 3000); // Wait 3 seconds after page load for autofill
+        }
+        
+        // Poll for autofill completion - runs validation after a delay
+        // In a real-world scenario, the extension would trigger a custom event
+        setTimeout(runValidation, 3000); // 3 seconds should be sufficient for autofill
     </script>
 </body>
 </html>
