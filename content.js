@@ -184,6 +184,119 @@
     // Fields that should be skipped and deferred to Chrome's native autofill
     const SKIP_FIELDS = ['firstName', 'lastName', 'fullName', 'email', 'phone', 'countryCode', 'country', 'state', 'city', 'pincode'];
     
+    // ===== MATCH SCORING CONFIGURATION =====
+    const MATCH_SCORING = {
+        MIN_FIELD_SCORE: 15,      // Minimum score for a field to be filled
+        MIN_CONTEXT_SCORE: 10,    // Minimum context score to be added to overall score
+        WEIGHTS: {
+            PRIORITY_EXACT: 50,   // Exact match in priority list
+            PRIORITY_KEYWORD: 30, // Priority keyword found
+            KEYWORD_MATCH: 15,    // General keyword match
+            CONTEXT_BONUS: 20,    // Context score bonus (when >= MIN_CONTEXT_SCORE)
+            EXACT_ATTRIBUTE: 25   // Exact match in name/id attribute
+        }
+    };
+    
+    // ===== YES/NO VARIANTS FOR BOOLEAN FIELDS =====
+    const YES_VARIANTS = new Set([
+        'yes', 'y', 'true', '1', 'authorized', 'eligible', 'approved', 'granted'
+    ]);
+    
+    const NO_VARIANTS = new Set([
+        'no', 'n', 'false', '0', 'not authorized', 'not eligible', 'denied', 'declined'
+    ]);
+    
+    /**
+     * Normalize string for comparison
+     * @param {string} str - String to normalize
+     * @returns {string} Normalized string
+     */
+    function normalize(str) {
+        if (!str) return '';
+        return String(str).toLowerCase().trim().replace(/[_\-\s]+/g, ' ');
+    }
+    
+    /**
+     * Check if value represents "yes"
+     * @param {string} value - Value to check
+     * @returns {boolean}
+     */
+    function isYes(value) {
+        const normalized = normalize(value);
+        return YES_VARIANTS.has(normalized) || normalized.includes('yes');
+    }
+    
+    /**
+     * Check if value represents "no"
+     * @param {string} value - Value to check
+     * @returns {boolean}
+     */
+    function isNo(value) {
+        const normalized = normalize(value);
+        return NO_VARIANTS.has(normalized) || normalized.includes('no');
+    }
+    
+    /**
+     * Match yes/no value from option text or value
+     * @param {Element} option - Option element
+     * @param {string} targetValue - Target value (yes/no)
+     * @returns {boolean}
+     */
+    function matchYesNoFromOptionText(option, targetValue) {
+        if (!option) return false;
+        
+        const optText = normalize(option.text || '');
+        const optValue = normalize(option.value || '');
+        const target = normalize(targetValue);
+        
+        const isTargetYes = isYes(target);
+        const isTargetNo = isNo(target);
+        
+        if (isTargetYes) {
+            return isYes(optText) || isYes(optValue);
+        } else if (isTargetNo) {
+            return isNo(optText) || isNo(optValue);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get element metadata for scoring
+     * @param {Element} el - Element to analyze
+     * @returns {Object} Element metadata
+     */
+    function getElementMeta(el) {
+        if (!el) return {};
+        
+        const meta = {
+            name: el.name || '',
+            id: el.id || '',
+            placeholder: el.placeholder || '',
+            ariaLabel: el.getAttribute('aria-label') || '',
+            dataAutomationId: el.getAttribute('data-automation-id') || '',
+            label: '',
+            context: ''
+        };
+        
+        // Get label
+        meta.label = findAssociatedLabel(el);
+        
+        // Get context if context-aware matching is available
+        if (typeof window.contextAwareMatching !== 'undefined') {
+            const contextData = window.contextAwareMatching.extractFieldContext(el);
+            meta.context = [
+                contextData.labelFor,
+                contextData.labelWrapping,
+                contextData.ariaLabelledByText,
+                contextData.previousSiblingText,
+                contextData.parentText
+            ].filter(t => t).join(' ');
+        }
+        
+        return meta;
+    }
+    
     // Map of field patterns to standard autocomplete attributes for Chrome's autofill
     const AUTOCOMPLETE_ATTRIBUTES = {
         firstName: 'given-name',
@@ -971,13 +1084,46 @@
                 const value = typeof rawVal === 'string' ? rawVal.trim() : rawVal;
                 if (value) {
                     const matchedFields = findMatchingFields(formFields, profileKey);
-                    // console.log(`Profile key: ${profileKey}, Value: ${value}, Matched fields:`, matchedFields);
-                    if (matchedFields && matchedFields.length > 0) {
-                        // Try filling the top match first; if it succeeds, count it
-                        const filled = fillField(matchedFields[0].field, String(value));
+                    console.log(`Profile key: ${profileKey}, Value: ${value}, Matched candidates:`, matchedFields.length);
+                    
+                    // Pick the best candidate that meets threshold
+                    const bestCandidate = pickBestCandidate(matchedFields, FIELD_MAPPINGS[profileKey]);
+                    
+                    if (bestCandidate) {
+                        let filled = false;
+                        
+                        // Special handling for boolean fields (usWorkEligible, sponsorshipRequired)
+                        if (profileKey === 'usWorkEligible' || profileKey === 'sponsorshipRequired') {
+                            const field = bestCandidate.field;
+                            
+                            // Only fill if value is yes/no
+                            if (!isYes(value) && !isNo(value)) {
+                                console.log(`Skipping ${profileKey}: value "${value}" is not yes/no`);
+                                return;
+                            }
+                            
+                            if (field.tagName === 'select') {
+                                filled = fillYesNoSelect(field.element, value);
+                            } else if (field.type === 'radio') {
+                                // Get all radios with same name
+                                const radioButtons = document.querySelectorAll(
+                                    `input[type="radio"][name="${field.element.name}"]`
+                                );
+                                filled = fillYesNoRadios(Array.from(radioButtons), value);
+                            } else {
+                                console.log(`Skipping ${profileKey}: unsupported field type for boolean matching`);
+                            }
+                        } else {
+                            // Standard filling for non-boolean fields
+                            filled = fillField(bestCandidate.field, String(value));
+                        }
+                        
                         if (filled) {
                             fieldsFound += 1;
+                            console.log(`Successfully filled ${profileKey} with best candidate (score: ${bestCandidate.score})`);
                         }
+                    } else {
+                        console.log(`No qualifying candidate found for ${profileKey} (threshold: ${MATCH_SCORING.MIN_FIELD_SCORE})`);
                     }
                 }
             });
@@ -1144,7 +1290,6 @@ function attachResumeToInputs(resumeFile) {
         const mapping = FIELD_MAPPINGS[profileKey];
         if (!mapping) return [];
 
-        const matches = [];
         const scoredFields = [];
 
         // Use context-aware matching if available
@@ -1158,8 +1303,14 @@ function attachResumeToInputs(resumeFile) {
                 const context = window.contextAwareMatching.extractFieldContext(field.element);
                 const contextScore = window.contextAwareMatching.calculateContextScore(context, mapping);
                 
-                // Combine traditional score with context score (context score has more weight)
-                score = score * 0.4 + contextScore * 0.6;
+                // Only add context score if it meets minimum threshold
+                if (contextScore >= MATCH_SCORING.MIN_CONTEXT_SCORE) {
+                    // Combine traditional score with context score (context score has more weight)
+                    score = score * 0.4 + contextScore * 0.6;
+                } else {
+                    // Use traditional score only if context score is too low
+                    console.log(`Context score ${contextScore} below threshold ${MATCH_SCORING.MIN_CONTEXT_SCORE}, using traditional score only`);
+                }
             }
             
             if (score > 0) {
@@ -1167,17 +1318,9 @@ function attachResumeToInputs(resumeFile) {
             }
         });
 
-        // Sort by score (highest first) and return the fields
+        // Sort by score (highest first)
         scoredFields.sort((a, b) => b.score - a.score);
         
-        // Return top matches, but avoid duplicating fields
-        const usedElements = new Set();
-        scoredFields.forEach(({ field }) => {
-            if (!usedElements.has(field.element) && matches.length < 3) {
-                matches.push({field, score: field.score});
-                usedElements.add(field.element);
-            }
-        });
         return scoredFields;
     }
 
@@ -1204,81 +1347,61 @@ function attachResumeToInputs(resumeFile) {
             }
         }
 
-        // Priority scoring
-        const labelText = (field.label || '').toLowerCase();
-        const ariaLabelText = (field.ariaLabel || '').toLowerCase();
-        const nameIdPlaceholderText = [field.name, field.id, field.placeholder].join(' ').toLowerCase();
+        // Get normalized text from various sources
+        const labelText = normalize(field.label || '');
+        const ariaLabelText = normalize(field.ariaLabel || '');
+        const nameText = normalize(field.name || '');
+        const idText = normalize(field.id || '');
+        const placeholderText = normalize(field.placeholder || '');
+        const allAttributes = [nameText, idText, placeholderText].join(' ');
 
-        // Score Placeholder: Highest Priority
-        if (field.placeholder) {
-            mapping.priority.forEach((keyword, index) => {
-                if (field.placeholder.toLowerCase().includes(keyword.toLowerCase())) {
-                    score += (mapping.priority.length - index) * 30; // Higher weight for placeholder match
-                }
-            });
-
-            mapping.keywords.forEach(keyword => {
-                if (field.placeholder.toLowerCase().includes(keyword.toLowerCase())) {
-                    score += 20; // Moderate boost for placeholder keyword match
-                }
-            });
-        }
-
-        // Score Label: Second Priority
-        if (labelText) {
-            mapping.priority.forEach((keyword, index) => {
-                if (labelText.includes(keyword.toLowerCase())) {
-                    score += (mapping.priority.length - index) * 10; // Moderate weight for label match
-                }
-            });
-
-            mapping.keywords.forEach(keyword => {
-                if (labelText.includes(keyword.toLowerCase())) {
-                    score += 15; // Moderate boost for label keyword match
-                }
-            });
-        }
-
-        // Score Aria-Label: Medium Priority
-        // if (ariaLabelText) {
-        //     mapping.priority.forEach((keyword, index) => {
-        //         if (ariaLabelText.includes(keyword.toLowerCase())) {
-        //             score += (mapping.priority.length - index) * 15; // Medium weight for aria-label match
-        //         }
-        //     });
-
-        //     mapping.keywords.forEach(keyword => {
-        //         if (ariaLabelText.includes(keyword.toLowerCase())) {
-        //             score += 10; // Moderate boost for aria-label keyword match
-        //         }
-        //     });
-        // }
-
-        // Score Name/ID/Placeholder: Least Priority
+        // Score priority keywords more heavily
         mapping.priority.forEach((keyword, index) => {
-            if (nameIdPlaceholderText.includes(keyword.toLowerCase())) {
-                score += (mapping.priority.length - index) * 10; // Lower weight for name/id/placeholder match
+            const normalizedKeyword = normalize(keyword);
+            const priorityWeight = (mapping.priority.length - index) * MATCH_SCORING.WEIGHTS.PRIORITY_KEYWORD;
+            
+            // Check for exact matches in priority attributes (name, id)
+            if (nameText === normalizedKeyword || idText === normalizedKeyword) {
+                score += MATCH_SCORING.WEIGHTS.EXACT_ATTRIBUTE;
+            }
+            
+            // Priority keyword in placeholder (high priority)
+            if (placeholderText.includes(normalizedKeyword)) {
+                score += priorityWeight * 1.2; // 20% bonus for placeholder
+            }
+            
+            // Priority keyword in label (medium-high priority)
+            if (labelText.includes(normalizedKeyword)) {
+                score += priorityWeight;
+            }
+            
+            // Priority keyword in attributes
+            if (allAttributes.includes(normalizedKeyword)) {
+                score += priorityWeight * 0.8;
             }
         });
 
+        // Score general keywords
         mapping.keywords.forEach(keyword => {
-            if (nameIdPlaceholderText.includes(keyword.toLowerCase())) {
-                score += 5; // Small boost for name/id/placeholder keyword match
+            const normalizedKeyword = normalize(keyword);
+            
+            if (placeholderText.includes(normalizedKeyword)) {
+                score += MATCH_SCORING.WEIGHTS.KEYWORD_MATCH * 1.2;
+            }
+            if (labelText.includes(normalizedKeyword)) {
+                score += MATCH_SCORING.WEIGHTS.KEYWORD_MATCH;
+            }
+            if (allAttributes.includes(normalizedKeyword)) {
+                score += MATCH_SCORING.WEIGHTS.KEYWORD_MATCH * 0.6;
             }
         });
 
-        // Exact Match Bonus for Name, ID, Placeholder, and Label
-        const exactMatches = [field.name, field.id].filter(attr =>
-            attr && mapping.priority.includes(attr.toLowerCase())
-        );
-        score += exactMatches.length * 20; // Bonus for exact matches in name/id
-
-        // Extra bonus for exact matches in label (highest priority)
-        if (labelText && mapping.priority.some(keyword => labelText === keyword.toLowerCase())) {
-            score += 50; // Large bonus for exact match in label
+        // Extra bonus for exact matches in label
+        if (labelText && mapping.priority.some(kw => normalize(kw) === labelText)) {
+            score += MATCH_SCORING.WEIGHTS.PRIORITY_EXACT;
         }
 
-        // Heuristic for Dial Code / Referral Fields (Dial Code and Referral fields have special logic)
+        // Heuristic for Dial Code / Referral Fields
         try {
             if (mapping.specialType === 'dialCode' && field.tagName === 'select' && field.element && field.element.options) {
                 const options = Array.from(field.element.options);
@@ -1312,6 +1435,90 @@ function attachResumeToInputs(resumeFile) {
 
         console.log(`Field:`, field, `Score for ${mapping.specialType || 'standard'} field:`, score);
         return score;
+    }
+
+    /**
+     * Pick the best candidate element for a profile key
+     * @param {Array} elements - Array of {field, score} objects
+     * @param {Object} mapping - Field mapping configuration
+     * @returns {Object|null} Best candidate {field, score} or null
+     */
+    function pickBestCandidate(elements, mapping) {
+        if (!elements || elements.length === 0) {
+            return null;
+        }
+        
+        // Filter elements that meet minimum score threshold
+        const qualified = elements.filter(item => item.score >= MATCH_SCORING.MIN_FIELD_SCORE);
+        
+        if (qualified.length === 0) {
+            console.log('No candidates met minimum score threshold:', MATCH_SCORING.MIN_FIELD_SCORE);
+            return null;
+        }
+        
+        // Sort by score (highest first) and return the best
+        qualified.sort((a, b) => b.score - a.score);
+        
+        console.log(`Best candidate selected with score ${qualified[0].score} (threshold: ${MATCH_SCORING.MIN_FIELD_SCORE})`);
+        return qualified[0];
+    }
+
+    /**
+     * Fill select field with yes/no value only
+     * @param {Element} selectEl - Select element
+     * @param {string} value - Profile value (yes/no)
+     * @returns {boolean} Success
+     */
+    function fillYesNoSelect(selectEl, value) {
+        if (!selectEl || !selectEl.options) return false;
+        
+        const options = Array.from(selectEl.options);
+        
+        // Skip empty/placeholder options
+        const validOptions = options.filter(opt => 
+            opt.value && opt.value.trim() !== '' && 
+            opt.text && opt.text.trim() !== ''
+        );
+        
+        // Find matching yes/no option
+        const matchingOption = validOptions.find(opt => matchYesNoFromOptionText(opt, value));
+        
+        if (matchingOption) {
+            selectEl.value = matchingOption.value;
+            triggerEvents(selectEl);
+            console.log(`Filled yes/no select with: ${matchingOption.text}`);
+            return true;
+        }
+        
+        console.log(`No yes/no match found in select for value: ${value}`);
+        return false;
+    }
+
+    /**
+     * Fill radio buttons with yes/no value only
+     * @param {Array} radioEls - Array of radio elements with same name
+     * @param {string} value - Profile value (yes/no)
+     * @returns {boolean} Success
+     */
+    function fillYesNoRadios(radioEls, value) {
+        if (!radioEls || radioEls.length === 0) return false;
+        
+        // Try to match by value or label
+        for (const radio of radioEls) {
+            const radioValue = radio.value;
+            const label = findAssociatedLabel(radio);
+            
+            // Check if radio value or label matches yes/no
+            if (matchYesNoFromOptionText({ text: label, value: radioValue }, value)) {
+                radio.checked = true;
+                triggerEvents(radio);
+                console.log(`Filled yes/no radio with: ${label || radioValue}`);
+                return true;
+            }
+        }
+        
+        console.log(`No yes/no match found in radios for value: ${value}`);
+        return false;
     }
 
 
