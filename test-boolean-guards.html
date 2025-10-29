@@ -349,9 +349,32 @@
             
             // Display results
             const resultsBox = document.getElementById('testResults');
-            resultsBox.innerHTML = '<h3>Test Results:</h3>' + 
-                '<p><strong>Passed:</strong> ' + passed + ' | <strong>Failed:</strong> ' + failed + '</p>' +
-                '<ul>' + results.map(r => '<li>' + r + '</li>').join('') + '</ul>';
+            
+            // Create elements safely to avoid XSS
+            const h3 = document.createElement('h3');
+            h3.textContent = 'Test Results:';
+            
+            const p = document.createElement('p');
+            const strong1 = document.createElement('strong');
+            strong1.textContent = 'Passed:';
+            const strong2 = document.createElement('strong');
+            strong2.textContent = 'Failed:';
+            p.appendChild(strong1);
+            p.appendChild(document.createTextNode(' ' + passed + ' | '));
+            p.appendChild(strong2);
+            p.appendChild(document.createTextNode(' ' + failed));
+            
+            const ul = document.createElement('ul');
+            results.forEach(r => {
+                const li = document.createElement('li');
+                li.textContent = r;
+                ul.appendChild(li);
+            });
+            
+            resultsBox.innerHTML = '';
+            resultsBox.appendChild(h3);
+            resultsBox.appendChild(p);
+            resultsBox.appendChild(ul);
             resultsBox.className = 'result-box ' + (failed > 0 ? 'fail' : 'success');
         }
         
