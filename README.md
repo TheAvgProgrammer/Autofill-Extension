@@ -189,7 +189,16 @@ The extension uses intelligent pattern matching combined with context-aware anal
 
 4. **Priority Keywords**: Each profile field has priority keywords that score higher (e.g., "firstname", "first_name" for First Name)
 
-5. **Multiple Matches**: The system can fill multiple fields of the same type to handle forms with redundant fields
+5. **Threshold-Based Filling**: Fields are only filled if they meet minimum score thresholds:
+   - **Minimum Field Score** (15 points): Elements must score at least 15 points to be considered
+   - **Minimum Context Score** (10 points): Context scoring only contributes if it meets this threshold
+   - Fields below threshold remain empty to avoid incorrect matches
+
+6. **Highest Score Wins**: When multiple elements match a profile key, only the single highest-scoring element is filled:
+   - All candidates are scored
+   - Only the best candidate that meets the minimum threshold is selected
+   - Lower-scoring duplicates are never filled
+   - This prevents multiple fields from being filled with the same value
 
 For detailed information about context-aware matching, see [CONTEXT_AWARE_MATCHING.md](CONTEXT_AWARE_MATCHING.md).
 
@@ -202,6 +211,12 @@ For detailed information about context-aware matching, see [CONTEXT_AWARE_MATCHI
   - Matching radio button values (yes/no)
   - Matching associated label text
   - Supporting common variations (authorized/not authorized, yes/no, etc.)
+- **Boolean-Only Work Authorization**: Special handling for work authorization and sponsorship questions:
+  - **US Work Eligible** and **Sponsorship Required** fields only accept Yes/No values
+  - Pronoun values or other non-boolean values are never filled into these fields
+  - Only dropdown options and radio buttons that normalize to "Yes" or "No" are considered matches
+  - If no Yes/No option is found, the field remains empty
+  - This prevents incorrect matches like filling pronouns into work authorization questions
 - **Enhanced Name Detection**: Expanded regex patterns to catch more naming variations:
   - First Name: firstname, first_name, fname, given_name, givenname, forename, first-name
   - Last Name: lastname, last_name, lname, surname, family_name, familyname, last-name
@@ -210,7 +225,10 @@ For detailed information about context-aware matching, see [CONTEXT_AWARE_MATCHI
   - Phone: phone, phone_number, phonenumber, mobile, tel, telephone
 - **Referral Source Detection**: Pattern matching for referral/source fields:
   - Referral: how_did_you_hear, referral_source, referral, source, hear_about, heard_about
-- **Work Authorization & Sponsorship**: Comprehensive pattern matching for US work authorization and visa sponsorship questions in both dropdown and radio button formats
+- **Smart Field Matching**: Score-based field matching ensures accuracy:
+  - Low-confidence matches are rejected
+  - Only one field per profile value is filled (the highest-scoring match)
+  - Threshold gating prevents incorrect autofill
 
 ## Privacy
 
