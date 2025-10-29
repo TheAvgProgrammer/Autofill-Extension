@@ -251,7 +251,7 @@
             keywords: ['pin', 'zip', 'postal', 'code']
         },
         usWorkEligible: {
-            priority: ['us_work_eligible', 'work_eligible', 'authorized_work', 'work_authorization', 'legal_work', 'work_authorized', 'us_authorized', 'legally_authorized', 'us-work-eligible'],
+            priority: ['authorized', 'us_work_eligible', 'work_eligible', 'authorized_work', 'work_authorization', 'legal_work', 'work_authorized', 'us_authorized', 'legally_authorized', 'us-work-eligible'],
             keywords: ['work', 'eligible', 'authorized', 'authorization', 'legal', 'us', 'united', 'states', 'legally']
         },
         sponsorshipRequired: {
@@ -283,7 +283,7 @@
         },
         pronouns: {
             priority: ['pronouns', 'preferred_pronouns', 'pronoun', 'gender_pronouns'],
-            keywords: ['pronouns', 'pronoun', 'preferred', 'she', 'he', 'they']
+            keywords: ['pronouns', 'pronoun', 'she', 'he', 'they']
         },
         veteranStatus: {
             priority: ['veteran_status', 'veteran', 'military_status', 'protected_veteran', 'veteranstatus'],
@@ -311,7 +311,7 @@
         },
         cgpa: {
             priority: ['cgpa', 'gpa', 'grade_point', 'grade_point_average', 'cumulative_gpa', 'overall_gpa'],
-            keywords: ['cgpa', 'gpa', 'grade', 'point', 'average', 'cumulative']
+            keywords: ['cgpa', 'gpa', 'grade', 'average', 'cumulative']
         },
         percentage: {
             priority: ['percentage', 'percent', 'marks', 'score', 'academic_percentage', 'grade_percentage'],
@@ -346,7 +346,7 @@
             keywords: ['major', 'field', 'study', 'discipline', 'specialization', 'subject']
         },
         employer: {
-            priority: ['employer', 'company', 'organization', 'company_name', 'employer_name'],
+            priority: ['most recent', 'recent', 'previous', 'company', 'organization', 'company_name', 'employer_name'],
             keywords: ['employer', 'company', 'organization', 'firm', 'business']
         },
         jobTitle: {
