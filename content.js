@@ -185,9 +185,14 @@
     const SKIP_FIELDS = ['firstName', 'lastName', 'fullName', 'email', 'phone', 'countryCode', 'country', 'state', 'city', 'pincode'];
     
     // ===== MATCH SCORING CONFIGURATION =====
+    const MIN_CONTEXT_SCORE = 80;         // Repository-wide minimum context score gate
+    const MIN_SELECT_MATCH_SCORE = 6;     // Minimum fuzzy match score for dropdowns
+    const TYPE_AWARE_KEYWORD_THRESHOLD = 5;   // Minimum keywords for complex field matching
+    const TYPE_AWARE_PENALTY_MULTIPLIER = 0.5; // Penalty for simple mappings to complex fields
+    
     const MATCH_SCORING = {
         MIN_FIELD_SCORE: 15,      // Minimum score for a field to be filled
-        MIN_CONTEXT_SCORE: 1000000,    // Minimum context score to be added to overall score
+        MIN_CONTEXT_SCORE: MIN_CONTEXT_SCORE,    // Use the constant defined above
         WEIGHTS: {
             PRIORITY_EXACT: 50,   // Exact match in priority list
             PRIORITY_KEYWORD: 30, // Priority keyword found
@@ -205,6 +210,13 @@
     const NO_VARIANTS = new Set([
         'no', 'n', 'false', '0', 'not authorized', 'not eligible', 'denied', 'declined'
     ]);
+    
+    // ===== DISABILITY STATUS PATTERNS =====
+    const DISABILITY_PATTERNS = {
+        YES: /yes.*disability|have.*disability|disability.*yes/i,
+        NO: /\bno\b.*disability|do not.*disability|don't.*disability|disability.*\bno\b/i,
+        DECLINE: /decline.*self-identify|don't wish|prefer not|do not wish/i
+    };
     
     /**
      * Normalize string for comparison
@@ -380,7 +392,12 @@
         },
         workedBefore: {
             priority: ['worked_before', 'workedbefore', 'previous_employment', 'prior_employment', 'worked_here', 'employed_before', 'previously_employed', 'worked-before', 'ever-worked'],
-            keywords: ['worked', 'before', 'previous', 'prior', 'employed', 'company', 'organization', 'ever']
+            keywords: ['worked', 'before', 'previous', 'prior', 'employed', 'company', 'organization', 'ever'],
+            context: {
+                requiredAny: ['our company', 'this company', 'our organization', 'this organization', 'our employer', 'worked here', 'employed here', 'work here before'],
+                disallowAny: ['vc', 'venture', 'capital', 'private', 'equity', 'startup', 'list', 'companies', 'backed'],
+                allowedTypes: ['radio', 'checkbox', 'select']  // Only yes/no controls, not free-text
+            }
         },
         race: {
             priority: ['race', 'ethnicity', 'ethnic_origin', 'racial_identity', 'ethnic_background', 'ethnicity_race'],
@@ -401,6 +418,11 @@
         veteranStatus: {
             priority: ['veteran_status', 'veteran', 'military_status', 'protected_veteran', 'veteranstatus'],
             keywords: ['veteran', 'military', 'protected', 'service', 'armed', 'forces']
+        },
+        disability: {
+            priority: ['disability', 'disabled', 'self-identify', 'self_identify', 'eeo', 'ofccp', 'disability_status'],
+            keywords: ['disability', 'disabled', 'self', 'identify', 'eeo', 'ofccp'],
+            type: 'select'
         },
         salaryMin: {
             priority: ['salary_min', 'salary_minimum', 'min_salary', 'minimum_salary', 'expected_salary_min', 'compensation_min', 'salary_expectation_min', 'salary_range_min'],
@@ -432,7 +454,11 @@
         },
         noticePeriod: {
             priority: ['notice_period', 'noticeperiod', 'notice', 'availability', 'available', 'joining_date', 'join_date', 'start_date', 'when_available', 'notice-period', 'joining-date'],
-            keywords: ['notice', 'period', 'availability', 'available', 'joining', 'join', 'start', 'when', 'weeks', 'immediately']
+            keywords: ['notice', 'period', 'availability', 'available', 'joining', 'join', 'start', 'when', 'weeks', 'immediately'],
+            context: {
+                requiredAny: ['availability', 'available', 'notice', 'start', 'join'],
+                disallowAny: ['vc', 'venture', 'capital', 'private', 'equity', 'startup', 'list', 'companies', 'backed', 'worked', 'experience']
+            }
         },
         githubUrl: {
             priority: ['github', 'github_url', 'githuburl', 'github_profile', 'github_link'],
@@ -1401,6 +1427,58 @@ function attachResumeToInputs(resumeFile) {
             score += MATCH_SCORING.WEIGHTS.PRIORITY_EXACT;
         }
 
+        // ===== CONTEXT VALIDATION: requiredAny and disallowAny =====
+        if (mapping.context) {
+            const allContextText = [labelText, ariaLabelText, nameText, idText, placeholderText, field.label || ''].join(' ').toLowerCase();
+            
+            // Check requiredAny: at least one required token must be present
+            if (mapping.context.requiredAny && mapping.context.requiredAny.length > 0) {
+                const hasRequired = mapping.context.requiredAny.some(token => 
+                    allContextText.includes(token.toLowerCase())
+                );
+                if (!hasRequired) {
+                    console.log(`Field rejected: missing required context token from [${mapping.context.requiredAny.join(', ')}]`);
+                    return 0;
+                }
+            }
+            
+            // Check disallowAny: none of these tokens should be present
+            if (mapping.context.disallowAny && mapping.context.disallowAny.length > 0) {
+                const hasDisallowed = mapping.context.disallowAny.some(token => 
+                    allContextText.includes(token.toLowerCase())
+                );
+                if (hasDisallowed) {
+                    console.log(`Field rejected: contains disallowed context token from [${mapping.context.disallowAny.join(', ')}]`);
+                    return 0;
+                }
+            }
+            
+            // Check allowedTypes: field type must match if specified
+            if (mapping.context.allowedTypes && mapping.context.allowedTypes.length > 0) {
+                const fieldType = field.type || field.tagName.toLowerCase();
+                const isAllowed = mapping.context.allowedTypes.some(type => 
+                    fieldType === type.toLowerCase()
+                );
+                if (!isAllowed) {
+                    console.log(`Field rejected: type "${fieldType}" not in allowed types [${mapping.context.allowedTypes.join(', ')}]`);
+                    return 0;
+                }
+            }
+        }
+
+        // ===== TYPE-AWARE PENALTIES =====
+        // Penalize mapping yes/no or numeric values into textarea/long-text fields
+        if (field.tagName === 'textarea' || (field.type === 'text' && field.element && field.element.rows && field.element.rows > 1)) {
+            if (labelText.length > 50 || placeholderText.length > 50) {
+                // Long label/placeholder suggests this is a long-form text field
+                // Apply penalty if mapping seems too short/simple
+                if (mapping.keywords.length < TYPE_AWARE_KEYWORD_THRESHOLD) {
+                    score = score * TYPE_AWARE_PENALTY_MULTIPLIER;
+                    console.log(`Applied type-aware penalty (${TYPE_AWARE_PENALTY_MULTIPLIER}x) for textarea with complex context`);
+                }
+            }
+        }
+
         // Heuristic for Dial Code / Referral Fields
         try {
             if (mapping.specialType === 'dialCode' && field.tagName === 'select' && field.element && field.element.options) {
@@ -1449,17 +1527,18 @@ function attachResumeToInputs(resumeFile) {
         }
         
         // Filter elements that meet minimum score threshold
-        const qualified = elements.filter(item => item.score >= MATCH_SCORING.MIN_FIELD_SCORE);
+        // Use MIN_CONTEXT_SCORE as the repository-wide gate for all fields
+        const qualified = elements.filter(item => item.score >= MIN_CONTEXT_SCORE);
         
         if (qualified.length === 0) {
-            console.log('No candidates met minimum score threshold:', MATCH_SCORING.MIN_FIELD_SCORE);
+            console.log(`No candidates met minimum score threshold: ${MIN_CONTEXT_SCORE} (highest was ${elements.length > 0 ? Math.max(...elements.map(e => e.score)) : 'N/A'})`);
             return null;
         }
         
         // Sort by score (highest first) and return the best
         qualified.sort((a, b) => b.score - a.score);
         
-        console.log(`Best candidate selected with score ${qualified[0].score} (threshold: ${MATCH_SCORING.MIN_FIELD_SCORE})`);
+        console.log(`Best candidate selected with score ${qualified[0].score} (threshold: ${MIN_CONTEXT_SCORE})`);
         return qualified[0];
     }
 
@@ -1675,6 +1754,25 @@ function attachResumeToInputs(resumeFile) {
             } else if (/^no$/i.test(normalizedValue)) {
                 matchingOption = validOptions.find(opt => /^no$/i.test(opt.value) || /^no$/i.test(opt.text));
             }
+            
+            // Disability status matching (EEO/OFCCP)
+            if (/disability|disabled/i.test(normalizedValue)) {
+                // Normalize the value to detect what the user wants
+                const hasYes = /\byes\b/i.test(normalizedValue);
+                const hasNo = /\bno\b|do not|don't/i.test(normalizedValue);
+                const hasDecline = /decline|don't wish|prefer not|do not wish/i.test(normalizedValue);
+                
+                if (hasYes && !hasNo) {
+                    // Match "Yes, I have a disability"
+                    matchingOption = validOptions.find(opt => DISABILITY_PATTERNS.YES.test(opt.text));
+                } else if (hasNo && !hasYes) {
+                    // Match "No, I do not have a disability"
+                    matchingOption = validOptions.find(opt => DISABILITY_PATTERNS.NO.test(opt.text));
+                } else if (hasDecline) {
+                    // Match "I don't wish to answer" / "Prefer not to say" / "Decline to self-identify"
+                    matchingOption = validOptions.find(opt => DISABILITY_PATTERNS.DECLINE.test(opt.text));
+                }
+            }
         }
         
         // Try fuzzy/similarity matching for best match
@@ -1715,9 +1813,12 @@ function attachResumeToInputs(resumeFile) {
                 }
             }
             
-            // Only use fuzzy match if score is reasonably high
-            if (bestScore >= 3) {
+            // Only use fuzzy match if score meets minimum threshold (raised from 3 to MIN_SELECT_MATCH_SCORE)
+            if (bestScore >= MIN_SELECT_MATCH_SCORE) {
                 matchingOption = bestMatch;
+                console.log(`Fuzzy match selected with score ${bestScore} (threshold: ${MIN_SELECT_MATCH_SCORE})`);
+            } else {
+                console.log(`Best fuzzy score ${bestScore} below threshold ${MIN_SELECT_MATCH_SCORE}, leaving unselected`);
             }
         }
 
