@@ -310,23 +310,34 @@
             const normalizedValue = testValue.toLowerCase();
             let matched = false;
             
-            // Test the disability matching logic
+            // Test the disability matching logic (replicate fillSelectField logic)
             if (/disability|disabled/i.test(normalizedValue)) {
-                const hasYes = /yes|have/i.test(normalizedValue);
-                const hasNo = /no|do not|don't/i.test(normalizedValue);
+                const hasYes = /\byes\b/i.test(normalizedValue);
+                const hasNo = /\bno\b|do not/i.test(normalizedValue);  // Word boundary for "no"
                 const hasDecline = /decline|don't wish|prefer not/i.test(normalizedValue);
                 
                 if (hasYes && !hasNo) {
+                    // "Yes, I have a disability"
                     matched = disabilityOptions.some(opt => 
-                        /yes.*disability|have.*disability/i.test(opt.text)
+                        /yes.*disability|have.*disability|disability.*yes/i.test(opt.text)
                     );
                 } else if (hasNo && !hasYes) {
+                    // "No, I do not have a disability"
                     matched = disabilityOptions.some(opt => 
-                        /no.*disability|do not.*disability|don't.*disability/i.test(opt.text)
+                        /\bno\b.*disability|do not.*disability|don't.*disability|disability.*\bno\b/i.test(opt.text)
                     );
                 } else if (hasDecline) {
+                    // "I don't wish to answer"
                     matched = disabilityOptions.some(opt => 
-                        /decline|don't wish|prefer not/i.test(opt.text)
+                        /decline.*self-identify|don't wish|prefer not|do not wish/i.test(opt.text)
+                    );
+                }
+            } else {
+                // For test values like "I don't wish to answer" that don't contain "disability"
+                const hasDecline = /decline|don't wish|prefer not|do not wish/i.test(normalizedValue);
+                if (hasDecline) {
+                    matched = disabilityOptions.some(opt => 
+                        /decline.*self-identify|don't wish|prefer not|do not wish/i.test(opt.text)
                     );
                 }
             }

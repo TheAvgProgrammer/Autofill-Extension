@@ -1752,8 +1752,8 @@ function attachResumeToInputs(resumeFile) {
             // Disability status matching (EEO/OFCCP)
             if (/disability|disabled/i.test(normalizedValue)) {
                 // Normalize the value to detect what the user wants
-                const hasYes = /yes|have/i.test(normalizedValue);
-                const hasNo = /no|do not|don't/i.test(normalizedValue);
+                const hasYes = /\byes\b/i.test(normalizedValue);
+                const hasNo = /\bno\b|do not|don't/i.test(normalizedValue);
                 const hasDecline = /decline|don't wish|prefer not|do not wish/i.test(normalizedValue);
                 
                 if (hasYes && !hasNo) {
@@ -1764,12 +1764,12 @@ function attachResumeToInputs(resumeFile) {
                 } else if (hasNo && !hasYes) {
                     // Match "No, I do not have a disability"
                     matchingOption = validOptions.find(opt => 
-                        /no.*disability|do not.*disability|don't.*disability|disability.*no/i.test(opt.text)
+                        /\bno\b.*disability|do not.*disability|don't.*disability|disability.*\bno\b/i.test(opt.text)
                     );
                 } else if (hasDecline) {
                     // Match "I don't wish to answer" / "Prefer not to say" / "Decline to self-identify"
                     matchingOption = validOptions.find(opt => 
-                        /decline.*self.identify|don't wish|prefer not|do not wish/i.test(opt.text)
+                        /decline.*self-identify|don't wish|prefer not|do not wish/i.test(opt.text)
                     );
                 }
             }
