@@ -777,44 +777,60 @@
      * @returns {number} Fields filled
      */
     
+    // Shared patterns for highest language proficiency level matching
+    const FLUENT_PROFICIENCY_PATTERNS = [
+        '5 - fluent',
+        '5 fluent',
+        'fluent',
+        '5 - native',
+        '5 native',
+        'native',
+        'expert',
+        '5',
+        'level 5',
+        'advanced fluent',
+        'full professional proficiency',
+        'bilingual'
+    ];
+    
     /**
      * Fill language proficiency field with the highest level (5 - Fluent)
-     * @param {Element} element - Select or combo box element
-     * @returns {Promise<boolean>} Success
+     * For Workday combo boxes with data-automation-id attributes
+     * @param {HTMLElement} element - Select or combo box element
+     * @returns {Promise<boolean>} Success indicator
      */
     async function fillLanguageProficiency(element) {
         if (!element) return false;
         
         try {
-            // Patterns for highest proficiency level
-            const fluentPatterns = [
-                '5 - fluent',
-                '5 fluent',
-                'fluent',
-                '5 - native',
-                '5 native',
-                'native',
-                'expert',
-                '5',
-                'level 5',
-                'advanced fluent',
-                'full professional proficiency'
-            ];
-            
             // Click to open listbox if it's a Workday combo
             if (element.hasAttribute('data-automation-id')) {
                 element.click();
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
             
-            // Look for listbox options
-            const listbox = document.querySelector('[role="listbox"], [role="option"]')?.closest('[role="listbox"], ul, .options, [data-automation-id*="options"]');
+            // Look for listbox options - try multiple selectors
+            const listboxSelectors = [
+                '[role="listbox"]',
+                '[role="option"]',
+                'ul.options',
+                '[data-automation-id*="options"]'
+            ];
+            
+            let listbox = null;
+            for (const selector of listboxSelectors) {
+                const elem = document.querySelector(selector);
+                if (elem) {
+                    listbox = elem.closest('[role="listbox"], ul, .options, [data-automation-id*="options"]');
+                    if (listbox) break;
+                }
+            }
             
             if (listbox) {
                 const options = listbox.querySelectorAll('[role="option"], li, option');
                 
                 // Try to find the highest proficiency level
-                for (const pattern of fluentPatterns) {
+                for (const pattern of FLUENT_PROFICIENCY_PATTERNS) {
                     for (const option of options) {
                         const text = (option.textContent || option.innerText || '').toLowerCase().trim();
                         const value = (option.value || '').toLowerCase().trim();
@@ -838,7 +854,7 @@
             if (element.tagName === 'SELECT') {
                 const options = element.querySelectorAll('option');
                 
-                for (const pattern of fluentPatterns) {
+                for (const pattern of FLUENT_PROFICIENCY_PATTERNS) {
                     for (const option of options) {
                         const text = (option.textContent || option.innerText || '').toLowerCase().trim();
                         const value = option.value.toLowerCase().trim();
@@ -866,7 +882,7 @@
     }
     
     /**
-     * Main function to fill all Workday-specific fields
+     * Fill all Workday-specific fields using specialized widget handlers
      * @param {Object} profile - User profile data
      * @param {Object} resumeFile - Resume file object
      * @returns {Promise<number>} Number of fields filled
@@ -1732,32 +1748,16 @@ function attachResumeToInputs(resumeFile) {
     /**
      * Fill language proficiency select field with highest level (5 - Fluent)
      * For standard HTML select elements (non-Workday)
-     * @param {Element} selectEl - Select element
-     * @returns {boolean} Success
+     * @param {HTMLSelectElement} selectEl - Select element
+     * @returns {boolean} Success indicator
      */
     function fillLanguageProficiencySelect(selectEl) {
         if (!selectEl || selectEl.tagName !== 'SELECT') return false;
         
-        // Patterns for highest proficiency level (in order of preference)
-        const fluentPatterns = [
-            '5 - fluent',
-            '5 fluent',
-            'fluent',
-            '5 - native',
-            '5 native',
-            'native',
-            'expert',
-            '5',
-            'level 5',
-            'advanced fluent',
-            'full professional proficiency',
-            'bilingual'
-        ];
-        
         const options = Array.from(selectEl.options);
         
-        // Try each pattern in order
-        for (const pattern of fluentPatterns) {
+        // Try each pattern in order (using shared constant)
+        for (const pattern of FLUENT_PROFICIENCY_PATTERNS) {
             for (let i = 0; i < options.length; i++) {
                 const option = options[i];
                 const text = (option.text || '').toLowerCase().trim();
