@@ -187,7 +187,7 @@
     // ===== MATCH SCORING CONFIGURATION =====
     const MATCH_SCORING = {
         MIN_FIELD_SCORE: 15,      // Minimum score for a field to be filled
-        MIN_CONTEXT_SCORE: 10,    // Minimum context score to be added to overall score
+        MIN_CONTEXT_SCORE: 1000000,    // Minimum context score to be added to overall score
         WEIGHTS: {
             PRIORITY_EXACT: 50,   // Exact match in priority list
             PRIORITY_KEYWORD: 30, // Priority keyword found
