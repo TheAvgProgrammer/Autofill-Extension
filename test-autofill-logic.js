@@ -16,7 +16,12 @@ const testProfile = {
 const FIELD_MAPPINGS = {
     workedBefore: {
         priority: ['worked_before', 'workedbefore', 'previous_employment', 'prior_employment', 'worked_here', 'employed_before', 'previously_employed', 'worked-before', 'ever-worked'],
-        keywords: ['worked', 'before', 'previous', 'prior', 'employed', 'company', 'organization', 'ever']
+        keywords: ['worked', 'before', 'previous', 'prior', 'employed', 'company', 'organization', 'ever'],
+        context: {
+            requiredAny: ['our company', 'this company', 'our organization', 'this organization', 'our employer', 'worked here', 'employed here', 'work here before'],
+            disallowAny: ['vc', 'venture', 'capital', 'private', 'equity', 'startup', 'list', 'companies', 'backed'],
+            allowedTypes: ['radio', 'checkbox', 'select']
+        }
     },
     race: {
         priority: ['race', 'ethnicity', 'ethnic_origin', 'racial_identity', 'ethnic_background', 'ethnicity_race'],
@@ -25,6 +30,11 @@ const FIELD_MAPPINGS = {
     gender: {
         priority: ['gender', 'sex', 'gender_identity'],
         keywords: ['gender', 'sex', 'male', 'female']
+    },
+    disability: {
+        priority: ['disability', 'disabled', 'self-identify', 'self_identify', 'eeo', 'ofccp', 'disability_status'],
+        keywords: ['disability', 'disabled', 'self', 'identify', 'eeo', 'ofccp'],
+        type: 'select'
     }
 };
 

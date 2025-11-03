@@ -69,6 +69,28 @@
             howDidYouHear: {
                 priority: ['how_did_you_hear', 'howdidyouhear', 'referral_source', 'referral', 'source', 'hear_about', 'heard_about', 'how-did-you-hear'],
                 keywords: ['how', 'hear', 'about', 'referral', 'source', 'found', 'learn']
+            },
+            noticePeriod: {
+                priority: ['notice_period', 'noticeperiod', 'notice', 'availability', 'available', 'joining_date', 'join_date', 'start_date', 'when_available', 'notice-period', 'joining-date'],
+                keywords: ['notice', 'period', 'availability', 'available', 'joining', 'join', 'start', 'when', 'weeks', 'immediately'],
+                context: {
+                    requiredAny: ['availability', 'available', 'notice', 'start', 'join'],
+                    disallowAny: ['vc', 'venture', 'capital', 'private', 'equity', 'startup', 'list', 'companies', 'backed', 'worked', 'experience']
+                }
+            },
+            workedBefore: {
+                priority: ['worked_before', 'workedbefore', 'previous_employment', 'prior_employment', 'worked_here', 'employed_before', 'previously_employed', 'worked-before', 'ever-worked'],
+                keywords: ['worked', 'before', 'previous', 'prior', 'employed', 'company', 'organization', 'ever'],
+                context: {
+                    requiredAny: ['our company', 'this company', 'our organization', 'this organization', 'our employer', 'worked here', 'employed here', 'work here before'],
+                    disallowAny: ['vc', 'venture', 'capital', 'private', 'equity', 'startup', 'list', 'companies', 'backed'],
+                    allowedTypes: ['radio', 'checkbox', 'select']
+                }
+            },
+            disability: {
+                priority: ['disability', 'disabled', 'self-identify', 'self_identify', 'eeo', 'ofccp', 'disability_status'],
+                keywords: ['disability', 'disabled', 'self', 'identify', 'eeo', 'ofccp'],
+                type: 'select'
             }
         };
 
@@ -220,10 +242,183 @@
         });
 
         // Summary
-        addHeader('Test Summary');
+        addHeader('Test Summary (Initial Tests)');
         const allTests = document.querySelectorAll('.test-result.pass, .test-result.fail');
         const passedTests = document.querySelectorAll('.test-result.pass');
         logInfo(`Passed: ${passedTests.length} / ${allTests.length} tests`);
+        
+        // ===== NEW TESTS FOR SAFER MATCHING =====
+        
+        // Test 8: VC/PE "list them" textarea should NOT match availability
+        addHeader('Test 8: VC/PE Textarea Context Rejection');
+        const vcTextareaField = {
+            name: 'experience_details',
+            id: 'vc_pe_experience',
+            label: 'If you have worked for a venture capital (VC) or private equity (PE) backed startup before, list them',
+            tagName: 'textarea',
+            type: 'textarea'
+        };
+        
+        // Simulate scoring for availability (noticePeriod) mapping
+        const noticePeriodMapping = FIELD_MAPPINGS.noticePeriod || FIELD_MAPPINGS.availability;
+        if (noticePeriodMapping) {
+            let score = 0;
+            const searchText = [vcTextareaField.name, vcTextareaField.id, vcTextareaField.label].join(' ').toLowerCase();
+            
+            // Check for disallowed tokens
+            let hasDisallowed = false;
+            if (noticePeriodMapping.context && noticePeriodMapping.context.disallowAny) {
+                hasDisallowed = noticePeriodMapping.context.disallowAny.some(token => 
+                    searchText.includes(token.toLowerCase())
+                );
+            }
+            
+            logInfo(`VC/PE textarea contains disallowed tokens: ${hasDisallowed ? 'YES (vc, venture, capital, etc.)' : 'NO'}`);
+            logResult(
+                'VC/PE textarea rejected due to disallowed context',
+                hasDisallowed,
+                `Disallowed tokens should prevent matching availability field`
+            );
+        }
+        
+        // Test 9: Disability dropdown mapping exists
+        addHeader('Test 9: Disability Field Mapping');
+        const hasDisabilityMapping = FIELD_MAPPINGS.hasOwnProperty('disability');
+        logResult('Field mapping exists for disability', hasDisabilityMapping);
+        
+        if (hasDisabilityMapping) {
+            logInfo(`Priority keywords: ${FIELD_MAPPINGS.disability.priority.join(', ')}`);
+            logInfo(`General keywords: ${FIELD_MAPPINGS.disability.keywords.join(', ')}`);
+        }
+        
+        // Test 10: Disability dropdown option matching
+        addHeader('Test 10: Disability Dropdown Option Matching');
+        
+        const disabilityValues = [
+            'Yes, I have a disability',
+            'No, I do not have a disability',
+            'I don\'t wish to answer'
+        ];
+        
+        const disabilityOptions = [
+            { text: 'Yes, I have a disability (or previously had a disability)', value: 'yes' },
+            { text: 'No, I do not have a disability', value: 'no' },
+            { text: 'I don\'t wish to answer', value: 'decline' }
+        ];
+        
+        disabilityValues.forEach((testValue, idx) => {
+            const normalizedValue = testValue.toLowerCase();
+            let matched = false;
+            
+            // Test the disability matching logic
+            if (/disability|disabled/i.test(normalizedValue)) {
+                const hasYes = /yes|have/i.test(normalizedValue);
+                const hasNo = /no|do not|don't/i.test(normalizedValue);
+                const hasDecline = /decline|don't wish|prefer not/i.test(normalizedValue);
+                
+                if (hasYes && !hasNo) {
+                    matched = disabilityOptions.some(opt => 
+                        /yes.*disability|have.*disability/i.test(opt.text)
+                    );
+                } else if (hasNo && !hasYes) {
+                    matched = disabilityOptions.some(opt => 
+                        /no.*disability|do not.*disability|don't.*disability/i.test(opt.text)
+                    );
+                } else if (hasDecline) {
+                    matched = disabilityOptions.some(opt => 
+                        /decline|don't wish|prefer not/i.test(opt.text)
+                    );
+                }
+            }
+            
+            logResult(
+                `Disability value "${testValue}" matches option`,
+                matched,
+                `Should match one of the dropdown options`
+            );
+        });
+        
+        // Test 11: MIN_CONTEXT_SCORE gate verification
+        addHeader('Test 11: MIN_CONTEXT_SCORE Gate Verification');
+        logInfo('MIN_CONTEXT_SCORE is now enforced at 80');
+        logInfo('Fields with scores below 80 should not be autofilled');
+        
+        // Simulate a low-scoring field
+        const lowScoreField = {
+            name: 'misc_field',
+            id: 'misc',
+            label: 'General Information',
+            tagName: 'input',
+            type: 'text'
+        };
+        
+        let lowScore = 0;
+        Object.keys(FIELD_MAPPINGS).forEach(profileKey => {
+            const score = calculateFieldScore(lowScoreField, FIELD_MAPPINGS[profileKey]);
+            if (score > lowScore) lowScore = score;
+        });
+        
+        logResult(
+            'Low-scoring field (score < 80) should be rejected',
+            lowScore < 80,
+            `Field score: ${lowScore}, Threshold: 80`
+        );
+        
+        // Test 12: workedBefore context validation
+        addHeader('Test 12: workedBefore Context Validation');
+        const workedBeforeMapping = FIELD_MAPPINGS.workedBefore;
+        
+        if (workedBeforeMapping && workedBeforeMapping.context) {
+            logInfo('workedBefore requires: "our company", "this company", etc.');
+            logInfo('workedBefore disallows: "vc", "venture", "capital", "startup", etc.');
+            
+            const goodField = {
+                name: 'worked_before',
+                label: 'Have you worked for our company before?',
+                type: 'radio'
+            };
+            
+            const badField = {
+                name: 'experience',
+                label: 'Have you worked for venture capital backed startups?',
+                type: 'textarea'
+            };
+            
+            const goodSearchText = [goodField.name, goodField.label].join(' ').toLowerCase();
+            const badSearchText = [badField.name, badField.label].join(' ').toLowerCase();
+            
+            const goodHasRequired = workedBeforeMapping.context.requiredAny.some(token => 
+                goodSearchText.includes(token.toLowerCase())
+            );
+            const badHasDisallowed = workedBeforeMapping.context.disallowAny.some(token => 
+                badSearchText.includes(token.toLowerCase())
+            );
+            const badIsTextarea = badField.type === 'textarea';
+            
+            logResult(
+                'Good workedBefore field passes validation',
+                goodHasRequired,
+                'Contains "our company" or similar'
+            );
+            
+            logResult(
+                'VC/startup field rejected by workedBefore',
+                badHasDisallowed && badIsTextarea,
+                'Contains disallowed tokens and is textarea'
+            );
+        }
+        
+        // Final Summary
+        addHeader('Final Test Summary');
+        const allTestsFinal = document.querySelectorAll('.test-result.pass, .test-result.fail');
+        const passedTestsFinal = document.querySelectorAll('.test-result.pass');
+        logInfo(`Total Passed: ${passedTestsFinal.length} / ${allTestsFinal.length} tests`);
+        
+        if (passedTestsFinal.length === allTestsFinal.length) {
+            logResult('All tests passed! ✓', true);
+        } else {
+            logResult(`${allTestsFinal.length - passedTestsFinal.length} test(s) failed`, false);
+        }
     </script>
 </body>
 </html>

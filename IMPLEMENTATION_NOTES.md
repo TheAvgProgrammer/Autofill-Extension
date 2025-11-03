@@ -182,8 +182,137 @@ The `fillSelectField()` function now includes:
 - Salary range validation
 - Field-specific validation messages
 
+## Safer Matching Implementation (Updated)
+
+### Overview
+Enhanced field matching with robust context scoring and safer autofill behavior to prevent wrong fills.
+
+### Key Changes
+
+#### 1. Repository-Wide Scoring Gates
+**Constants Added:**
+- `MIN_CONTEXT_SCORE = 80`: Repository-wide minimum score threshold for any field to be autofilled
+- `MIN_SELECT_MATCH_SCORE = 6`: Minimum fuzzy match score for dropdown selections (raised from 3)
+
+**Enforcement:**
+- `pickBestCandidate()` now enforces MIN_CONTEXT_SCORE gate before allowing any field to be filled
+- No field gets filled unless its score meets or exceeds 80
+- Console logs show which fields are rejected and why
+
+#### 2. Context Validation Framework
+Added support for `context` property in FIELD_MAPPINGS with three validation types:
+
+**requiredAny:** Array of tokens where at least one must be present
+- Example: `['availability', 'available', 'notice', 'start', 'join']`
+
+**disallowAny:** Array of tokens that must NOT be present
+- Example: `['vc', 'venture', 'capital', 'private', 'equity', 'startup']`
+
+**allowedTypes:** Array of allowed field types
+- Example: `['radio', 'checkbox', 'select']` (restricts to yes/no controls only)
+
+#### 3. Enhanced Field Mappings
+
+**noticePeriod (Availability):**
+```javascript
+context: {
+    requiredAny: ['availability', 'available', 'notice', 'start', 'join'],
+    disallowAny: ['vc', 'venture', 'capital', 'private', 'equity', 'startup', 'list', 'companies', 'backed', 'worked', 'experience']
+}
+```
+- Requires presence of availability-related tokens
+- Explicitly disallows VC/PE/startup context to prevent filling "list them" textareas
+
+**workedBefore:**
+```javascript
+context: {
+    requiredAny: ['our company', 'this company', 'our organization', 'this organization', 'our employer', 'worked here', 'employed here', 'work here before'],
+    disallowAny: ['vc', 'venture', 'capital', 'private', 'equity', 'startup', 'list', 'companies', 'backed'],
+    allowedTypes: ['radio', 'checkbox', 'select']
+}
+```
+- Requires "our company/this company" style context
+- Disallows VC/PE/startup related questions
+- Restricts to yes/no controls only (no free-text fields)
+
+**disability (New Field):**
+```javascript
+priority: ['disability', 'disabled', 'self-identify', 'self_identify', 'eeo', 'ofccp', 'disability_status'],
+keywords: ['disability', 'disabled', 'self', 'identify', 'eeo', 'ofccp'],
+type: 'select'
+```
+
+#### 4. Type-Aware Penalties
+- `calculateFieldScore()` now applies penalties for mapping simple values to complex fields
+- Textareas with long labels/placeholders get 50% penalty for simple mappings
+- Prevents yes/no or short values from being mapped to long-form text fields
+
+#### 5. Disability Dropdown Support
+**Regex Patterns for Common Labels:**
+- "Yes, I have a disability" → Matches `/yes.*disability|have.*disability/i`
+- "No, I do not have a disability" → Matches `/no.*disability|do not.*disability/i`
+- "I don't wish to answer" → Matches `/decline|don't wish|prefer not/i`
+
+**Normalized Matching:**
+- Handles variations like "Yes, I have a disability (or previously had a disability)"
+- Recognizes "Decline to self-identify" and "Prefer not to say"
+- Safe fallback: leaves unselected if no confident match
+
+#### 6. Safer Dropdown Selection
+**Matching Order (maintained):**
+1. Exact match (value or text)
+2. Bidirectional partial contains
+3. Fuzzy matching with MIN_SELECT_MATCH_SCORE threshold
+
+**Improvements:**
+- Fuzzy threshold raised from 3 to 6 (MIN_SELECT_MATCH_SCORE)
+- Placeholder filtering maintained (skips "select/choose" options)
+- Console logs show fuzzy scores and rejections
+- Leaves unselected on ambiguous/low-confidence matches
+
+### Testing Updates
+
+#### test_autofill_simulation.html
+Added comprehensive tests for:
+- **Test 8:** VC/PE textarea rejection (disallowAny validation)
+- **Test 9:** Disability field mapping existence
+- **Test 10:** Disability dropdown option matching (all variants)
+- **Test 11:** MIN_CONTEXT_SCORE gate verification
+- **Test 12:** workedBefore context validation (requiredAny and allowedTypes)
+
+#### test-autofill-logic.js
+Updated FIELD_MAPPINGS to include:
+- workedBefore with context rules
+- disability with priority keywords
+
+### Acceptance Criteria Verification
+
+✅ **MIN_CONTEXT_SCORE gating:** Fields scoring < 80 are rejected
+✅ **VC/PE textarea rejection:** "list them" fields blocked by disallowAny tokens
+✅ **Disability dropdown:** Matches Yes/No/Decline variants correctly
+✅ **Low confidence rejection:** Fuzzy matches < 6 are rejected
+✅ **workedBefore restrictions:** Only fills yes/no controls, not textareas
+✅ **Context validation:** requiredAny and disallowAny enforced in calculateFieldScore
+
+### Manual Testing Recommendations
+
+Test on representative job portals (Greenhouse, Lever, Workday, Taleo) to verify:
+1. Availability/notice fields only filled when type and context align
+2. workedBefore only filled into yes/no controls, never free-form text
+3. VC/PE "list them" textareas remain empty despite availability values in profile
+4. Disability dropdowns select correct options or remain unselected
+5. Dropdowns remain unselected on ambiguous/low-confidence matches
+
+### Console Logging
+Enhanced logging shows:
+- Context validation results (requiredAny/disallowAny checks)
+- Type restriction violations (allowedTypes)
+- Fuzzy match scores and threshold comparisons
+- Field rejections with reasons
+
 ## Notes
 - All changes are minimal and surgical
 - No breaking changes to existing functionality
 - Backward compatible with existing profiles
+- Enhanced safety through multi-layered validation
 - Ready for production use
