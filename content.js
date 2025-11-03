@@ -491,6 +491,14 @@
         jobTitle: {
             priority: ['job_title', 'title', 'position', 'role', 'job_position'],
             keywords: ['title', 'position', 'role', 'job', 'designation']
+        },
+        languageName: {
+            priority: ['language_name', 'spoken_language', 'language_spoken'],
+            keywords: ['language', 'spoken', 'native', 'communication']
+        },
+        languageProficiency: {
+            priority: ['proficiency', 'language_proficiency', 'fluency', 'proficiency_level', 'language_level', 'skill_level', 'fluency_level'],
+            keywords: ['proficiency', 'fluency', 'level', 'ability', 'competency', 'skill']
         }
     };
 
@@ -768,6 +776,117 @@
      * @param {Object} resumeFile - Resume file
      * @returns {number} Fields filled
      */
+    
+    // Shared patterns for highest language proficiency level matching
+    const FLUENT_PROFICIENCY_PATTERNS = [
+        '5 - fluent',
+        '5 fluent',
+        'fluent',
+        '5 - native',
+        '5 native',
+        'native',
+        'expert',
+        '5',
+        'level 5',
+        'advanced fluent',
+        'full professional proficiency',
+        'bilingual'
+    ];
+    
+    /**
+     * Fill language proficiency field with the highest level (5 - Fluent)
+     * For Workday combo boxes with data-automation-id attributes
+     * @param {HTMLElement} element - Select or combo box element
+     * @returns {Promise<boolean>} Success indicator
+     */
+    async function fillLanguageProficiency(element) {
+        if (!element) return false;
+        
+        try {
+            // Click to open listbox if it's a Workday combo
+            if (element.hasAttribute('data-automation-id')) {
+                element.click();
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            // Look for listbox options - try multiple selectors
+            const listboxSelectors = [
+                '[role="listbox"]',
+                '[role="option"]',
+                'ul.options',
+                '[data-automation-id*="options"]'
+            ];
+            
+            let listbox = null;
+            for (const selector of listboxSelectors) {
+                const elem = document.querySelector(selector);
+                if (elem) {
+                    listbox = elem.closest('[role="listbox"], ul, .options, [data-automation-id*="options"]');
+                    if (listbox) break;
+                }
+            }
+            
+            if (listbox) {
+                const options = listbox.querySelectorAll('[role="option"], li, option');
+                
+                // Try to find the highest proficiency level
+                for (const pattern of FLUENT_PROFICIENCY_PATTERNS) {
+                    for (const option of options) {
+                        const text = (option.textContent || option.innerText || '').toLowerCase().trim();
+                        const value = (option.value || '').toLowerCase().trim();
+                        
+                        if (text.includes(pattern) || value.includes(pattern) || 
+                            text === pattern || value === pattern) {
+                            option.click?.();
+                            option.selected = true;
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            
+                            if (WORKDAY_DEBUG) {
+                                console.log(`Filled language proficiency with: ${text || value}`);
+                            }
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            // Fallback for standard HTML select elements
+            if (element.tagName === 'SELECT') {
+                const options = element.querySelectorAll('option');
+                
+                for (const pattern of FLUENT_PROFICIENCY_PATTERNS) {
+                    for (const option of options) {
+                        const text = (option.textContent || option.innerText || '').toLowerCase().trim();
+                        const value = option.value.toLowerCase().trim();
+                        
+                        if (text.includes(pattern) || value.includes(pattern) ||
+                            text === pattern || value === pattern) {
+                            element.value = option.value;
+                            element.dispatchEvent(new Event('change', { bubbles: true }));
+                            element.dispatchEvent(new Event('input', { bubbles: true }));
+                            
+                            if (WORKDAY_DEBUG) {
+                                console.log(`Filled language proficiency with: ${text || value}`);
+                            }
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        } catch (e) {
+            if (WORKDAY_DEBUG) console.warn('Language proficiency fill failed:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * Fill all Workday-specific fields using specialized widget handlers
+     * @param {Object} profile - User profile data
+     * @param {Object} resumeFile - Resume file object
+     * @returns {Promise<number>} Number of fields filled
+     */
     async function fillWorkdayFields(profile, resumeFile) {
         let filled = 0;
         
@@ -792,6 +911,21 @@
         for (const select of selects) {
             const label = findAssociatedLabel(select) || select.getAttribute('aria-label') || '';
             const matchedKey = findProfileKeyForLabel(label);
+            
+            // Special handling for language proficiency fields
+            if (matchedKey === 'languageName') {
+                // Auto-fill English language
+                const success = await handleWorkdayComboBox(select, 'English');
+                if (success) filled++;
+                continue;
+            }
+            
+            if (matchedKey === 'languageProficiency') {
+                // Auto-fill with highest proficiency level (5 - Fluent)
+                const success = await fillLanguageProficiency(select);
+                if (success) filled++;
+                continue;
+            }
             
             if (matchedKey && profile[matchedKey] && !SKIP_FIELDS.includes(matchedKey)) {
                 const success = await handleWorkdayComboBox(select, String(profile[matchedKey]));
@@ -835,6 +969,12 @@
         
         const normalized = label.toLowerCase().trim();
         
+        // Special handling for language proficiency - check first to avoid conflict with languageName
+        if (normalized.includes('proficiency') || normalized.includes('fluency') || 
+            normalized.includes('skill level') || normalized.includes('competency')) {
+            return 'languageProficiency';
+        }
+        
         // Try to match against field mappings
         for (const [key, mapping] of Object.entries(FIELD_MAPPINGS)) {
             if (SKIP_FIELDS.includes(key)) continue;
@@ -857,6 +997,11 @@
             if (matchCount >= 2) {
                 return key;
             }
+        }
+        
+        // Fallback: check if it's a simple "language" label for languageName
+        if (normalized === 'language' || normalized === 'language name') {
+            return 'languageName';
         }
         
         return null;
@@ -1103,6 +1248,33 @@
             orderedKeys.forEach(profileKey => {
                 // Skip contact/address fields - defer to Chrome's autofill
                 if (SKIP_FIELDS.includes(profileKey)) {
+                    return;
+                }
+                
+                // Special handling for language fields - auto-fill with defaults
+                if (profileKey === 'languageName') {
+                    const matchedFields = findMatchingFields(formFields, profileKey);
+                    const bestCandidate = pickBestCandidate(matchedFields, FIELD_MAPPINGS[profileKey]);
+                    if (bestCandidate && bestCandidate.field.tagName === 'select') {
+                        const filled = fillSelectField(bestCandidate.field.element, 'English');
+                        if (filled) {
+                            fieldsFound += 1;
+                            console.log(`Auto-filled language name with "English"`);
+                        }
+                    }
+                    return;
+                }
+                
+                if (profileKey === 'languageProficiency') {
+                    const matchedFields = findMatchingFields(formFields, profileKey);
+                    const bestCandidate = pickBestCandidate(matchedFields, FIELD_MAPPINGS[profileKey]);
+                    if (bestCandidate && bestCandidate.field.tagName === 'select') {
+                        const filled = fillLanguageProficiencySelect(bestCandidate.field.element);
+                        if (filled) {
+                            fieldsFound += 1;
+                            console.log(`Auto-filled language proficiency with highest level (5 - Fluent)`);
+                        }
+                    }
                     return;
                 }
                 
@@ -1570,6 +1742,40 @@ function attachResumeToInputs(resumeFile) {
         }
         
         console.log(`No yes/no match found in select for value: ${value}`);
+        return false;
+    }
+
+    /**
+     * Fill language proficiency select field with highest level (5 - Fluent)
+     * For standard HTML select elements (non-Workday)
+     * @param {HTMLSelectElement} selectEl - Select element
+     * @returns {boolean} Success indicator
+     */
+    function fillLanguageProficiencySelect(selectEl) {
+        if (!selectEl || selectEl.tagName !== 'SELECT') return false;
+        
+        const options = Array.from(selectEl.options);
+        
+        // Try each pattern in order (using shared constant)
+        for (const pattern of FLUENT_PROFICIENCY_PATTERNS) {
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                const text = (option.text || '').toLowerCase().trim();
+                const value = (option.value || '').toLowerCase().trim();
+                
+                // Check for exact match or contains
+                if (text === pattern || value === pattern ||
+                    text.includes(pattern) || value.includes(pattern)) {
+                    selectEl.selectedIndex = i;
+                    selectEl.value = option.value;
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    selectEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    console.log(`fillLanguageProficiencySelect: selected highest level "${option.text}" (value: ${option.value})`);
+                    return true;
+                }
+            }
+        }
+        
         return false;
     }
 
