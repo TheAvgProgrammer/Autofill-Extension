@@ -493,11 +493,11 @@
             keywords: ['title', 'position', 'role', 'job', 'designation']
         },
         languageName: {
-            priority: ['language', 'language_name', 'spoken_language', 'languages'],
-            keywords: ['language', 'spoken', 'native', 'fluent', 'communication']
+            priority: ['language_name', 'spoken_language', 'language_spoken'],
+            keywords: ['language', 'spoken', 'native', 'communication']
         },
         languageProficiency: {
-            priority: ['proficiency', 'language_proficiency', 'fluency', 'proficiency_level', 'language_level'],
+            priority: ['proficiency', 'language_proficiency', 'fluency', 'proficiency_level', 'language_level', 'skill_level', 'fluency_level'],
             keywords: ['proficiency', 'fluency', 'level', 'ability', 'competency', 'skill']
         }
     };
@@ -953,6 +953,12 @@
         
         const normalized = label.toLowerCase().trim();
         
+        // Special handling for language proficiency - check first to avoid conflict with languageName
+        if (normalized.includes('proficiency') || normalized.includes('fluency') || 
+            normalized.includes('skill level') || normalized.includes('competency')) {
+            return 'languageProficiency';
+        }
+        
         // Try to match against field mappings
         for (const [key, mapping] of Object.entries(FIELD_MAPPINGS)) {
             if (SKIP_FIELDS.includes(key)) continue;
@@ -975,6 +981,11 @@
             if (matchCount >= 2) {
                 return key;
             }
+        }
+        
+        // Fallback: check if it's a simple "language" label for languageName
+        if (normalized === 'language' || normalized === 'language name') {
+            return 'languageName';
         }
         
         return null;

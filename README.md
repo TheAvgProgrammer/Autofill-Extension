@@ -7,6 +7,7 @@ A Chrome extension that automatically fills job application forms with your save
 - **Multi-Profile Support**: Store and manage up to 5 different profiles
 - **Context-Aware Field Matching**: Advanced field detection using surrounding HTML context (labels, nearby text, ARIA attributes) for improved accuracy on ATS platforms like Workday and Greenhouse
 - **Workday Optimization**: First-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized widget handlers
+- **Language Proficiency Autofill** (NEW): Automatically fills language proficiency fields with English at the highest level (5 - Fluent)
 - **Dynamic "Add" Sections**: Automatically fills dynamically added Work Experience and Education sections on Workday
 - **Multi-Page Flow Support**: Automatically handles multi-page applications with progress tracking and dynamic content detection
 - **Comprehensive Profile Fields**: LinkedIn URL, GitHub URL, Portfolio URL, US Work Authorization, Visa Sponsorship, Referral Source, Education, Experience, Salary Expectations, and Resume File
@@ -47,6 +48,8 @@ Each profile supports the following fields:
 ### Automatically Filled Fields
 
 The extension also automatically fills:
+- **Language Name** - Automatically fills "English" in language selection fields
+- **Language Proficiency** - Automatically selects the highest proficiency level (5 - Fluent) in proficiency dropdowns
 - **Full Name** - Automatically combines firstName + lastName
 - **Phone Number** - Automatically combines countryCode + phone (e.g., "+1 5551234567")
 - **Country Code Select** - If a separate dial-code dropdown exists, it is selected using normalized matching (supports "+1", "1", and texts like "United States (+1)"). Phone input is filled with the local number only.
