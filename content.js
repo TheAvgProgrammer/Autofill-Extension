@@ -187,10 +187,12 @@
     // ===== MATCH SCORING CONFIGURATION =====
     const MIN_CONTEXT_SCORE = 80;         // Repository-wide minimum context score gate
     const MIN_SELECT_MATCH_SCORE = 6;     // Minimum fuzzy match score for dropdowns
+    const TYPE_AWARE_KEYWORD_THRESHOLD = 5;   // Minimum keywords for complex field matching
+    const TYPE_AWARE_PENALTY_MULTIPLIER = 0.5; // Penalty for simple mappings to complex fields
     
     const MATCH_SCORING = {
         MIN_FIELD_SCORE: 15,      // Minimum score for a field to be filled
-        MIN_CONTEXT_SCORE: 80,    // Minimum context score to be added to overall score
+        MIN_CONTEXT_SCORE: MIN_CONTEXT_SCORE,    // Use the constant defined above
         WEIGHTS: {
             PRIORITY_EXACT: 50,   // Exact match in priority list
             PRIORITY_KEYWORD: 30, // Priority keyword found
@@ -208,6 +210,13 @@
     const NO_VARIANTS = new Set([
         'no', 'n', 'false', '0', 'not authorized', 'not eligible', 'denied', 'declined'
     ]);
+    
+    // ===== DISABILITY STATUS PATTERNS =====
+    const DISABILITY_PATTERNS = {
+        YES: /yes.*disability|have.*disability|disability.*yes/i,
+        NO: /\bno\b.*disability|do not.*disability|don't.*disability|disability.*\bno\b/i,
+        DECLINE: /decline.*self-identify|don't wish|prefer not|do not wish/i
+    };
     
     /**
      * Normalize string for comparison
@@ -1460,15 +1469,12 @@ function attachResumeToInputs(resumeFile) {
         // ===== TYPE-AWARE PENALTIES =====
         // Penalize mapping yes/no or numeric values into textarea/long-text fields
         if (field.tagName === 'textarea' || (field.type === 'text' && field.element && field.element.rows && field.element.rows > 1)) {
-            // Check if this is a boolean field (yes/no)
-            const booleanProfileKeys = ['usWorkEligible', 'sponsorshipRequired', 'workedBefore', 'relocateWilling', 'travelWilling'];
-            // This check would require passing profileKey, so we'll apply a general penalty for textareas with short keywords
             if (labelText.length > 50 || placeholderText.length > 50) {
                 // Long label/placeholder suggests this is a long-form text field
                 // Apply penalty if mapping seems too short/simple
-                if (mapping.keywords.length < 5) {
-                    score = score * 0.5; // 50% penalty for simple mappings to complex fields
-                    console.log(`Applied type-aware penalty for textarea with complex context`);
+                if (mapping.keywords.length < TYPE_AWARE_KEYWORD_THRESHOLD) {
+                    score = score * TYPE_AWARE_PENALTY_MULTIPLIER;
+                    console.log(`Applied type-aware penalty (${TYPE_AWARE_PENALTY_MULTIPLIER}x) for textarea with complex context`);
                 }
             }
         }
@@ -1758,19 +1764,13 @@ function attachResumeToInputs(resumeFile) {
                 
                 if (hasYes && !hasNo) {
                     // Match "Yes, I have a disability"
-                    matchingOption = validOptions.find(opt => 
-                        /yes.*disability|have.*disability|disability.*yes/i.test(opt.text)
-                    );
+                    matchingOption = validOptions.find(opt => DISABILITY_PATTERNS.YES.test(opt.text));
                 } else if (hasNo && !hasYes) {
                     // Match "No, I do not have a disability"
-                    matchingOption = validOptions.find(opt => 
-                        /\bno\b.*disability|do not.*disability|don't.*disability|disability.*\bno\b/i.test(opt.text)
-                    );
+                    matchingOption = validOptions.find(opt => DISABILITY_PATTERNS.NO.test(opt.text));
                 } else if (hasDecline) {
                     // Match "I don't wish to answer" / "Prefer not to say" / "Decline to self-identify"
-                    matchingOption = validOptions.find(opt => 
-                        /decline.*self-identify|don't wish|prefer not|do not wish/i.test(opt.text)
-                    );
+                    matchingOption = validOptions.find(opt => DISABILITY_PATTERNS.DECLINE.test(opt.text));
                 }
             }
         }
