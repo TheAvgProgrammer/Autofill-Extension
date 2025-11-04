@@ -890,10 +890,12 @@
      * Set language selector to English on Workday pages
      * This handles language selectors that may be at the top of the page
      * @param {string} language - The language to set (default: "English")
-     * @returns {Promise<boolean>} Success
+     * @returns {Promise<number>} Number of language selectors set
      */
     async function setWorkdayLanguage(language = 'English') {
-        if (!isWorkdayMode) return false;
+        if (!isWorkdayMode) return 0;
+        
+        let languageSelectorsSet = 0;
         
         try {
             // Common selectors for language dropdowns on Workday
@@ -928,31 +930,31 @@
                             element.value = englishOption.value;
                             element.dispatchEvent(new Event('change', { bubbles: true }));
                             element.dispatchEvent(new Event('blur', { bubbles: true }));
+                            languageSelectorsSet++;
                             if (WORKDAY_DEBUG) {
                                 console.log('Set language selector to English:', element);
                             }
-                            return true;
                         }
                     }
                     // Handle Workday combo boxes
                     else if (element.getAttribute('role') === 'combobox') {
                         const success = await handleWorkdayComboBox(element, language);
                         if (success) {
+                            languageSelectorsSet++;
                             if (WORKDAY_DEBUG) {
                                 console.log('Set Workday language combo to English:', element);
                             }
-                            return true;
                         }
                     }
                 }
             }
             
-            return false;
+            return languageSelectorsSet;
         } catch (e) {
             if (WORKDAY_DEBUG) {
                 console.warn('Error setting Workday language:', e);
             }
-            return false;
+            return languageSelectorsSet;
         }
     }
 
