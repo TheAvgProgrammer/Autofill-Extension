@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Selector Test - Workday Style</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .workday-widget {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Language Selector Test for myworkdayjobs.com</h1>
+    <p>This test page simulates language selectors found on Workday application pages.</p>
+    
+    <div class="workday-widget">
+        <h2>Test 1: Standard HTML Select with Language</h2>
+        <div class="form-group">
+            <label for="language-standard">Preferred Language</label>
+            <select id="language-standard" name="language" data-automation-id="languageSelect">
+                <option value="">Please select</option>
+                <option value="en-US">English</option>
+                <option value="es-ES">Spanish</option>
+                <option value="fr-FR">French</option>
+                <option value="de-DE">German</option>
+                <option value="zh-CN">Chinese</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="workday-widget">
+        <h2>Test 2: Language Select with Different Format</h2>
+        <div class="form-group">
+            <label for="locale-select">Select Language / Locale</label>
+            <select id="locale-select" name="locale" data-automation-id="localeSelect">
+                <option value="">Choose your language</option>
+                <option value="english">English (United States)</option>
+                <option value="spanish">Español (Spanish)</option>
+                <option value="french">Français (French)</option>
+                <option value="german">Deutsch (German)</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="workday-widget">
+        <h2>Test 3: Aria-Label Based Language Selector</h2>
+        <div class="form-group">
+            <label for="lang-aria">Communication Language</label>
+            <select id="lang-aria" aria-label="Select your preferred language" name="preferred_language">
+                <option value="">Select</option>
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="workday-widget">
+        <h2>Test 4: Workday Combo Box Style (Simulated)</h2>
+        <div class="form-group">
+            <label for="workday-combo">Language Preference</label>
+            <div role="combobox" 
+                 aria-label="Language selection" 
+                 data-automation-id="language-combobox"
+                 id="workday-combo"
+                 style="border: 1px solid #ccc; padding: 8px; border-radius: 4px; cursor: pointer;">
+                Click to select language (Workday style)
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <h2>Other Application Fields</h2>
+        <label for="linkedin">LinkedIn URL</label>
+        <input type="url" id="linkedin" name="linkedin" data-automation-id="linkedinInput" placeholder="https://linkedin.com/in/yourprofile">
+    </div>
+    
+    <div class="form-group">
+        <label for="work-auth">Are you authorized to work in the US?</label>
+        <select id="work-auth" name="usWorkEligible" data-automation-id="usWorkEligible">
+            <option value="">Please select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+        </select>
+    </div>
+    
+    <script>
+        // Monitor changes to language selectors
+        document.querySelectorAll('select[name*="language"], select[id*="language"], select[aria-label*="language"], select[data-automation-id*="language"], select[data-automation-id*="locale"]').forEach(select => {
+            select.addEventListener('change', function() {
+                console.log('Language changed to:', this.value, '(', this.options[this.selectedIndex].text, ')');
+                const parent = this.closest('.workday-widget');
+                if (parent) {
+                    const successMsg = parent.querySelector('.success');
+                    if (successMsg) successMsg.remove();
+                    
+                    const msg = document.createElement('p');
+                    msg.className = 'success';
+                    msg.textContent = '✓ Language set to: ' + this.options[this.selectedIndex].text;
+                    parent.appendChild(msg);
+                }
+            });
+        });
+        
+        // Log page load
+        console.log('Test page loaded. Language selectors ready for testing.');
+        console.log('Note: This page simulates myworkdayjobs.com structure');
+    </script>
+</body>
+</html>

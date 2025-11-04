@@ -352,6 +352,10 @@
         jobTitle: {
             priority: ['job_title', 'title', 'position', 'role', 'job_position'],
             keywords: ['title', 'position', 'role', 'job', 'designation']
+        },
+        language: {
+            priority: ['language', 'preferred_language', 'lang', 'language_preference', 'select_language', 'choose_language'],
+            keywords: ['language', 'lang', 'preferred', 'select', 'choose', 'communication']
         }
     };
 
@@ -881,6 +885,76 @@
             observerThrottle = null;
         }
     }
+    
+    /**
+     * Set language selector to English on Workday pages
+     * This handles language selectors that may be at the top of the page
+     * @param {string} language - The language to set (default: "English")
+     * @returns {Promise<boolean>} Success
+     */
+    async function setWorkdayLanguage(language = 'English') {
+        if (!isWorkdayMode) return false;
+        
+        try {
+            // Common selectors for language dropdowns on Workday
+            const languageSelectors = [
+                '[data-automation-id*="language"]',
+                '[data-automation-id*="locale"]',
+                'select[name*="language"]',
+                'select[id*="language"]',
+                'select[aria-label*="language"]',
+                'select[aria-label*="Language"]',
+                '[role="combobox"][aria-label*="language"]',
+                '[role="combobox"][aria-label*="Language"]'
+            ];
+            
+            for (const selector of languageSelectors) {
+                const elements = document.querySelectorAll(selector);
+                
+                for (const element of elements) {
+                    // Handle regular select elements
+                    if (element.tagName === 'SELECT') {
+                        // Try to find English option
+                        const options = Array.from(element.options);
+                        const englishOption = options.find(opt => 
+                            opt.text.toLowerCase().includes('english') || 
+                            opt.value.toLowerCase().includes('english') ||
+                            opt.value.toLowerCase() === 'en' ||
+                            opt.value.toLowerCase() === 'en-us' ||
+                            opt.value.toLowerCase() === 'en_us'
+                        );
+                        
+                        if (englishOption) {
+                            element.value = englishOption.value;
+                            element.dispatchEvent(new Event('change', { bubbles: true }));
+                            element.dispatchEvent(new Event('blur', { bubbles: true }));
+                            if (WORKDAY_DEBUG) {
+                                console.log('Set language selector to English:', element);
+                            }
+                            return true;
+                        }
+                    }
+                    // Handle Workday combo boxes
+                    else if (element.getAttribute('role') === 'combobox') {
+                        const success = await handleWorkdayComboBox(element, language);
+                        if (success) {
+                            if (WORKDAY_DEBUG) {
+                                console.log('Set Workday language combo to English:', element);
+                            }
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        } catch (e) {
+            if (WORKDAY_DEBUG) {
+                console.warn('Error setting Workday language:', e);
+            }
+            return false;
+        }
+    }
 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'autofill') {
@@ -925,6 +999,9 @@
                     console.log('Loaded Workday progress:', progress);
                 }
                 
+                // Set language to English first (important for myworkdayjobs.com)
+                await setWorkdayLanguage('English');
+                
                 fieldsFound += await fillWorkdayFields(profile, resumeFile);
             }
             
@@ -937,6 +1014,11 @@
             const enrichedProfile = { ...profile };
             if (profile.firstName && profile.lastName && !profile.fullName) {
                 enrichedProfile.fullName = `${profile.firstName} ${profile.lastName}`;
+            }
+            
+            // Set language to English by default if not specified
+            if (!enrichedProfile.language) {
+                enrichedProfile.language = 'English';
             }
 
             // Detect if there's a separate dial-code select present
