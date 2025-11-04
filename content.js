@@ -1239,7 +1239,6 @@ function attachResumeToInputs(resumeFile) {
         const mapping = FIELD_MAPPINGS[profileKey];
         if (!mapping) return [];
 
-        const matches = [];
         const scoredFields = [];
 
         formFields.forEach(field => {
@@ -1252,14 +1251,6 @@ function attachResumeToInputs(resumeFile) {
         // Sort by score (highest first) and return the fields
         scoredFields.sort((a, b) => b.score - a.score);
         
-        // Return top matches, but avoid duplicating fields
-        const usedElements = new Set();
-        scoredFields.forEach(({ field, score }) => {
-            if (!usedElements.has(field.element) && matches.length < 3) {
-                matches.push({field, score});
-                usedElements.add(field.element);
-            }
-        });
         return scoredFields;
     }
 
