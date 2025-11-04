@@ -95,6 +95,12 @@ The extension can detect and interact with navigation buttons:
 
 The extension fills the following Workday-specific fields (excluding contact/address):
 
+#### Language Preference
+- **Language / Locale Selection**: Automatically sets to English by default on myworkdayjobs.com
+  - Detects language selectors in forms and at page level
+  - Supports various selector formats (data-automation-id, aria-label, standard select)
+  - Runs before other field filling to ensure proper language context
+
 #### Work Authorization & Availability
 - Authorized to work in the US (Yes/No)
 - Sponsorship required now or future (Yes/No)

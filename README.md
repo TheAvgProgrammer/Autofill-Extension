@@ -6,8 +6,9 @@ A Chrome extension that automatically fills job application forms with your save
 
 - **Multi-Profile Support**: Store and manage up to 5 different profiles
 - **Workday Optimization**: First-class support for Workday-hosted job applications (myworkdayjobs.com, *.workday.com) with specialized widget handlers
+- **Language Auto-Selection**: Automatically sets language preference to English on Workday applications (myworkdayjobs.com)
 - **Multi-Page Flow Support**: Automatically handles multi-page applications with progress tracking and dynamic content detection
-- **Comprehensive Profile Fields**: LinkedIn URL, GitHub URL, Portfolio URL, US Work Authorization, Visa Sponsorship, Referral Source, Education, Experience, Salary Expectations, and Resume File
+- **Comprehensive Profile Fields**: LinkedIn URL, GitHub URL, Portfolio URL, Language Preference, US Work Authorization, Visa Sponsorship, Referral Source, Education, Experience, Salary Expectations, and Resume File
 - **Contact Field Deferral**: Personal contact and address fields (name, email, phone, address, city, state, postal code, country) are deferred to Chrome's built-in Address Autofill for better privacy and security
 - **Referral Source Tracking**: "How did you hear about us?" field with options: LinkedIn, Google, Twitter, Friend, Other
 - **Intelligent Pattern Matching**: Uses regex-based field detection to identify form fields accurately
@@ -27,20 +28,30 @@ A Chrome extension that automatically fills job application forms with your save
 ## Profile Fields
 
 Each profile supports the following fields:
-- **First Name** * (Required)
-- **Last Name** * (Required)  
-- **Email Address** * (Required)
-- **Country Code** * (Required - e.g., +1, +44, +91)
-- **Phone Number** * (Required - without country code)
 - **LinkedIn URL** (Optional)
-- **Country** * (Required)
-- **State/Province** * (Required)
-- **City** * (Required)
-- **Pincode/Zipcode** * (Required)
+- **GitHub URL** (Optional)
+- **Portfolio / Website URL** (Optional)
+- **Preferred Language** (Optional - Defaults to English, especially important for myworkdayjobs.com)
 - **US Work Eligible** * (Required - Yes/No)
 - **Sponsorship Required** * (Required - Yes/No)
 - **How Did You Hear About Us?** (Optional - LinkedIn, Google, Twitter, Friend, Other)
+- **Willing to Relocate** (Optional - Yes/No)
+- **Willing to Travel** (Optional - Yes/No/Occasionally)
+- **Earliest Start Date** (Optional)
+- **Notice Period** (Optional)
+- **Preferred Pronouns** (Optional)
+- **Worked Before** (Optional - Yes/No)
+- **Veteran Status** (Optional)
+- **Salary Expectations** (Optional - Min/Max)
+- **Education Details** (Optional - Institution, Degree Type, Major, Graduation Date, CGPA, Percentage)
+- **Recent Employer** (Optional)
+- **Recent Job Title** (Optional)
+- **Cover Letter** (Optional)
+- **Race** (Optional)
+- **Gender** (Optional)
 - **Resume File** (Optional - PDF/DOC/DOCX)
+
+**Note**: Personal contact and address fields (name, email, phone, address, city, state, postal code, country) are handled by Chrome's built-in Address Autofill for better privacy and security.
 
 ### Automatically Filled Fields
 
