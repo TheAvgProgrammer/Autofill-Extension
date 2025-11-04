@@ -117,7 +117,8 @@
     
     <script>
         // Monitor changes to language selectors
-        document.querySelectorAll('select[name*="language"], select[id*="language"], select[aria-label*="language"], select[data-automation-id*="language"], select[data-automation-id*="locale"]').forEach(select => {
+        const languageSelector = 'select[name*="language"], select[id*="language"], select[aria-label*="language"], select[data-automation-id*="language"], select[data-automation-id*="locale"]';
+        document.querySelectorAll(languageSelector).forEach(select => {
             select.addEventListener('change', function() {
                 console.log('Language changed to:', this.value, '(', this.options[this.selectedIndex].text, ')');
                 const parent = this.closest('.workday-widget');

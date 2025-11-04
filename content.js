@@ -1,5 +1,19 @@
+/**
+ * Job Application Autofill Extension - Content Script
+ * 
+ * This extension automatically fills job application forms with saved profile data.
+ * Features:
+ * - Multi-profile support (5 profiles)
+ * - Workday optimization (myworkdayjobs.com)
+ * - Language auto-selection (defaults to English)
+ * - Intelligent field detection and matching
+ * - Resume file upload support
+ */
 (function() {
-    // ===== WORKDAY SUPPORT CONFIGURATION =====
+    // ===== CONFIGURATION =====
+    
+    // Debug flag for general operations
+    const DEBUG = false;
     
     // Debug flag for Workday operations
     const WORKDAY_DEBUG = false;
@@ -889,7 +903,7 @@
     /**
      * Set language selector to English on Workday pages
      * This handles language selectors that may be at the top of the page
-     * @param {string} language - The language to set (default: "English")
+     * @param {string} [language='English'] - The language to set (defaults to "English")
      * @returns {Promise<number>} Number of language selectors set
      */
     async function setWorkdayLanguage(language = 'English') {
@@ -1240,9 +1254,9 @@ function attachResumeToInputs(resumeFile) {
         
         // Return top matches, but avoid duplicating fields
         const usedElements = new Set();
-        scoredFields.forEach(({ field }) => {
+        scoredFields.forEach(({ field, score }) => {
             if (!usedElements.has(field.element) && matches.length < 3) {
-                matches.push({field, score: field.score});
+                matches.push({field, score});
                 usedElements.add(field.element);
             }
         });
@@ -1378,7 +1392,9 @@ function attachResumeToInputs(resumeFile) {
             }
         } catch (e) { /* ignore heuristic errors */ }
 
-        console.log(`Field:`, field, `Score for ${mapping.specialType || 'standard'} field:`, score);
+        if (DEBUG) {
+            console.log(`Field:`, field, `Score for ${mapping.specialType || 'standard'} field:`, score);
+        }
         return score;
     }
 
@@ -1441,7 +1457,6 @@ function attachResumeToInputs(resumeFile) {
     function fillSelectField(element, value) {
         // For select fields, try to find a matching option
         const options = Array.from(element.options);
-        console.log(options)
         // Skip empty/placeholder options
         const validOptions = options.filter(opt => 
             opt.value && opt.value.trim() !== '' && 
