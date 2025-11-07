@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
     // Tabs
     profileTab.addEventListener('click', () => switchTab('profile'));
     autofillTab.addEventListener('click', () => switchTab('autofill'));

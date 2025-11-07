@@ -1,7 +1,7 @@
 {
   "name": "Job Application Autofill",
   "description": "Automatically fill job application forms with saved profile data",
-  "version": "1.0",
+  "version": "2.1",
   "manifest_version": 3,
   "permissions": [
     "storage",
@@ -15,9 +15,17 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["context.js", "content.js"],
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "*://*.myworkdayjobs.com/*",
+        "*://*.workday.com/*"
+      ],
+      "js": ["workday-dynamic.js"]
     }
-  ],
+],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

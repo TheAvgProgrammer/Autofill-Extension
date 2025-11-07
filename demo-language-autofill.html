@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Proficiency Autofill Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .demo-container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .demo-section {
+            margin: 30px 0;
+        }
+        .field-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .filled {
+            background-color: #e8f5e9 !important;
+            border-color: #4caf50 !important;
+        }
+        button {
+            background-color: #0073e6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        button:hover {
+            background-color: #005bb5;
+        }
+        .status {
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+        .info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>Language Proficiency Autofill Demo</h1>
+        
+        <div class="status info">
+            <strong>Demo Instructions:</strong> Click "Simulate Autofill" to see how the extension automatically fills language proficiency fields.
+        </div>
+
+        <div class="demo-section">
+            <h2>Form Fields</h2>
+            
+            <div class="field-group">
+                <label for="lang1">Language Name</label>
+                <select id="lang1">
+                    <option value="">Select a language...</option>
+                    <option value="english">English</option>
+                    <option value="spanish">Spanish</option>
+                    <option value="french">French</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="prof1">Language Proficiency Level</label>
+                <select id="prof1">
+                    <option value="">Select proficiency...</option>
+                    <option value="1">1 - Elementary</option>
+                    <option value="2">2 - Limited Working</option>
+                    <option value="3">3 - Professional Working</option>
+                    <option value="4">4 - Full Professional</option>
+                    <option value="5">5 - Fluent</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="lang2">Spoken Language</label>
+                <select id="lang2">
+                    <option value="">Choose language...</option>
+                    <option value="english">English</option>
+                    <option value="spanish">Spanish</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="prof2">Fluency Level</label>
+                <select id="prof2">
+                    <option value="">Select...</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="fluent">Fluent</option>
+                    <option value="native">Native</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="autofillBtn">Simulate Autofill</button>
+
+        <div id="status" class="status success" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Simulate the extension's autofill logic
+        document.getElementById('autofillBtn').addEventListener('click', function() {
+            // Fill language name fields
+            fillLanguageSelect('lang1', 'english');
+            fillLanguageSelect('lang2', 'english');
+            
+            // Fill proficiency fields with highest level
+            fillProficiencySelect('prof1');
+            fillProficiencySelect('prof2');
+            
+            // Show success message
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = '✓ Successfully autofilled: English (Language) → 5 - Fluent (Proficiency)';
+            statusDiv.style.display = 'block';
+        });
+
+        function fillLanguageSelect(elementId, value) {
+            const select = document.getElementById(elementId);
+            if (!select) return false;
+            
+            const normalizedValue = value.toLowerCase();
+            const options = Array.from(select.options);
+            
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                const text = option.text.toLowerCase();
+                const optValue = option.value.toLowerCase();
+                
+                if (text.includes(normalizedValue) || optValue.includes(normalizedValue)) {
+                    select.selectedIndex = i;
+                    select.value = option.value;
+                    select.classList.add('filled');
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log(`Filled ${elementId} with: ${option.text}`);
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function fillProficiencySelect(elementId) {
+            const select = document.getElementById(elementId);
+            if (!select) return false;
+            
+            // Patterns for highest proficiency (in order of preference)
+            const fluentPatterns = [
+                '5 - fluent', '5 fluent', 'fluent',
+                '5 - native', '5 native', 'native',
+                'expert', '5', 'level 5'
+            ];
+            
+            const options = Array.from(select.options);
+            
+            for (const pattern of fluentPatterns) {
+                for (let i = 0; i < options.length; i++) {
+                    const option = options[i];
+                    const text = option.text.toLowerCase();
+                    const optValue = option.value.toLowerCase();
+                    
+                    if (text.includes(pattern) || optValue.includes(pattern) ||
+                        text === pattern || optValue === pattern) {
+                        select.selectedIndex = i;
+                        select.value = option.value;
+                        select.classList.add('filled');
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        console.log(`Filled ${elementId} with highest level: ${option.text}`);
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
+    </script>
+</body>
+</html>
